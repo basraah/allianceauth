@@ -18,6 +18,8 @@ import notifications.views
 import hrapplications.views
 import eve_sso.urls
 
+from alliance_auth.hooks import get_hooks
+
 # Functional/Untranslated URL's
 urlpatterns = [
     # Locale
@@ -301,3 +303,9 @@ urlpatterns += i18n_patterns(
     url(r'^fat/link/(?P<hash>[a-zA-Z0-9]+)/(?P<fatname>[a-z0-9_-]+)/$',
         fleetactivitytracking.views.click_fatlink_view),
 )
+
+# Append hooked service urls
+services = get_hooks('services_hook')
+for svc in services:
+    urlpatterns += svc().urlpatterns
+
