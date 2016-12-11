@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 
+from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
+
 from authentication.states import MEMBER_STATE, BLUE_STATE
 from authentication.models import AuthServicesInfo
 
@@ -104,3 +107,17 @@ class ServicesHook:
             self.auth_set_password = ''
             self.auth_reset_password = ''
             self.auth_deactivate = ''
+
+
+class MenuItemHook:
+    def __init__(self, text, classes, url_name, order=None):
+        self.text = text
+        self.classes = classes
+        self.url_name = url_name
+        self.template = 'public/menuitem.html'
+        self.order = order if order is not None else 9999
+
+    def render(self, request):
+        return render_to_string(self.template,
+                                {'item': self},
+                                request=request)
