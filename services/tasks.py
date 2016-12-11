@@ -46,8 +46,12 @@ def deactivate_services(user):
     logger.debug("Deactivating services for user %s" % user)
     # Iterate through service hooks and disable users
     for fn in get_hooks('services_hook'):
-        if fn().delete_user(user):
-            change = True
+        svc = fn()
+        try:
+            if svc.delete_user(user):
+                change = True
+        except:
+            logger.exception('Exception running delete_user for services module %s on user %s' % (svc, user))
     if change:
         notify(user, "Services Disabled", message="Your services accounts have been disabled.", level="danger")
 
@@ -64,4 +68,8 @@ def validate_services(self, user, state):
     logger.debug('Ensuring user %s services are available to state %s' % (user, state))
     # Iterate through services hooks and have them check the validity of the user
     for fn in get_hooks('services_hook'):
-        fn().validate_user(user)
+        svc = fn()
+        try:
+            svc.validate_user(user)
+        except:
+            logger.exception('Exception running validate_user for services module %s on user %s' % (svc, user))

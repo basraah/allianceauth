@@ -27,8 +27,12 @@ def m2m_changed_user_groups(sender, instance, action, *args, **kwargs):
         logger.debug("Triggering service group update for %s" % instance)
         # Iterate through Service hooks
         services = get_hooks('services_hook')
-        for svc in services:
-            svc().update_groups(instance)
+        for fn in services:
+            svc = fn()
+            try:
+                svc.update_groups(instance)
+            except:
+                logger.exception('Exception running update_groups for services module %s on user %s' % (svc, instance))
 
     if action == "post_add" or action == "post_remove" or action == "post_clear":
         logger.debug("Waiting for commit to trigger service group update for %s" % instance)
