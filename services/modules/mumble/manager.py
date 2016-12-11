@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import os
 import hashlib
 
-from services.models import MumbleUser
+from .models import MumbleUser
 
 import logging
 
