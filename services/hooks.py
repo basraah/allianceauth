@@ -101,6 +101,9 @@ class ServicesHook:
         """
         return ''
 
+    def __str__(self):
+        return self.name or 'Unknown Service Module'
+
     class Urls:
         def __init__(self):
             self.auth_activate = ''
