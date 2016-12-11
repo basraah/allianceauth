@@ -4,7 +4,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from notifications import notify
 
-from services.hooks import ServicesHook
+from services.hooks import ServicesHook, MenuItemHook
 from alliance_auth import hooks
 from authentication.models import AuthServicesInfo
 from authentication.managers import AuthServicesInfoManager
@@ -83,3 +83,21 @@ class OpenfireService(ServicesHook):
 @hooks.register('services_hook')
 def register_service():
     return OpenfireService()
+
+
+class JabberBroadcast(MenuItemHook):
+    def __init__(self):
+        MenuItemHook.__init__(self,
+                              'Jabber Broadcast',
+                              'fa fa-lock fa-fw fa-bullhorn grayiconecolor',
+                              'auth_jabber_broadcast_view')
+
+    def render(self, request):
+        if request.user.has_perm('auth.jabber_broadcast'):
+            return MenuItemHook.render(self, request)
+        return ''
+
+
+@hooks.register('menu_util_hook')
+def register_menu():
+    return JabberBroadcast()
