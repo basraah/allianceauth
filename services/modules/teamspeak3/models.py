@@ -4,6 +4,19 @@ from django.db import models
 
 
 @python_2_unicode_compatible
+class Teamspeak3User(models.Model):
+    user = models.OneToOneField('auth.User',
+                                primary_key=True,
+                                on_delete=models.CASCADE,
+                                related_name='teamspeak3')
+    uid = models.CharField(max_length=254, blank=True, default="")
+    perm_key = models.CharField(max_length=254, blank=True, default="")
+
+    def __str__(self):
+        return self.uid
+
+
+@python_2_unicode_compatible
 class TSgroup(models.Model):
     ts_group_id = models.IntegerField(primary_key=True)
     ts_group_name = models.CharField(max_length=30)
