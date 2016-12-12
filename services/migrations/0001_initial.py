@@ -46,15 +46,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='MumbleUser',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('username', models.CharField(max_length=254, unique=True)),
-                ('pwhash', models.CharField(max_length=40)),
-                ('groups', models.TextField(blank=True, null=True)),
-            ],
-        ),
-        migrations.CreateModel(
             name='TSgroup',
             fields=[
                 ('ts_group_id', models.IntegerField(primary_key=True, serialize=False)),

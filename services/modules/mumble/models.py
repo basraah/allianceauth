@@ -11,7 +11,3 @@ class MumbleUser(models.Model):
 
     def __str__(self):
         return self.username
-
-    class Meta:
-        # Force the old table location/name
-        app_label = 'services'
