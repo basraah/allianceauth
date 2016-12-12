@@ -10,8 +10,6 @@ class TSgroup(models.Model):
 
     class Meta:
         verbose_name = 'TS Group'
-        # Force the old table location/name
-        app_label = 'services'
 
     def __str__(self):
         return self.ts_group_name
@@ -24,8 +22,6 @@ class AuthTS(models.Model):
 
     class Meta:
         verbose_name = 'Auth / TS Group'
-        # Force the old table location/name
-        app_label = 'services'
 
     def __str__(self):
         return self.auth_group.name
@@ -38,8 +34,6 @@ class UserTSgroup(models.Model):
 
     class Meta:
         verbose_name = 'User TS Group'
-        # Force the old table location/name
-        app_label = 'services'
 
     def __str__(self):
         return self.user.name
