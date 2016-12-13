@@ -60,7 +60,7 @@ class DiscordTasks:
             return True
 
     @classmethod
-    def update_discord_groups(cls, pk, task_self=None):
+    def update_groups(cls, pk, task_self=None):
         user = User.objects.get(pk=pk)
         logger.debug("Updating discord groups for user %s" % user)
         if cls.has_account(user):
@@ -85,13 +85,13 @@ class DiscordTasks:
             logger.debug("User does not have a discord account, skipping")
 
     @classmethod
-    def update_all_discord_groups(cls):
+    def update_all_groups(cls):
         logger.debug("Updating ALL discord groups")
         for discord_user in DiscordUser.objects.exclude(uid__exact=''):
             update_discord_groups.delay(discord_user.user.pk)
 
     @classmethod
-    def update_discord_nickname(cls, pk, task_self=None):
+    def update_nickname(cls, pk, task_self=None):
         user = User.objects.get(pk=pk)
         logger.debug("Updating discord nickname for user %s" % user)
         if cls.has_account(user):
@@ -111,13 +111,13 @@ class DiscordTasks:
             logger.debug("User %s does not have a discord account" % user)
 
     @classmethod
-    def update_all_discord_nicknames(cls):
+    def update_all_nicknames(cls):
         logger.debug("Updating ALL discord nicknames")
         for discord_user in DiscordUser.objects.exclude(uid__exact=''):
             update_discord_nickname.delay(discord_user.user.user_id)
 
     @classmethod
-    def disable_discord(cls):
+    def disable(cls):
         if settings.ENABLE_AUTH_DISCORD:
             logger.warn(
                 "ENABLE_AUTH_DISCORD still True, after disabling users will still be able to link Discord accounts")
@@ -130,19 +130,19 @@ class DiscordTasks:
 @app.task(bind=True)
 @only_one(key="Discord", timeout=60 * 5)
 def update_discord_groups(self, pk):
-    DiscordTasks.update_discord_groups(pk, task_self=self)
+    DiscordTasks.update_groups(pk, task_self=self)
 
 
 @app.task
 def update_all_discord_groups():
-    DiscordTasks.update_all_discord_groups()
+    DiscordTasks.update_all_groups()
 
 
 @app.task(bind=True)
 def update_discord_nickname(self, pk):
-    DiscordTasks.update_discord_nickname(pk, task_self=self)
+    DiscordTasks.update_nickname(pk, task_self=self)
 
 
 @app.task
 def update_all_discord_nicknames():
-    DiscordTasks.update_all_discord_nicknames()
+    DiscordTasks.update_all_nicknames()
