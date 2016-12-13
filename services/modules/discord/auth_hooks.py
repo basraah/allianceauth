@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 
 from alliance_auth import hooks
 from services.hooks import ServicesHook
-from .tasks import DiscordTasks, update_all_discord_groups, update_discord_groups
+from .tasks import DiscordTasks
 from .urls import urlpatterns
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class DiscordService(ServicesHook):
     def update_groups(self, user):
         logger.debug('Processing %s groups for %s' % (self.name, user))
         if DiscordTasks.has_account(user):
-            update_discord_groups.delay(user.pk)
+            DiscordTasks.update_groups.delay(user.pk)
 
     def validate_user(self, user):
         logger.debug('Validating user %s %s account' % (user, self.name))
@@ -36,7 +36,7 @@ class DiscordService(ServicesHook):
 
     def update_all_groups(self):
         logger.debug('Update all %s groups called' % self.name)
-        update_all_discord_groups.delay()
+        DiscordTasks.update_all_groups.delay()
 
     def service_enabled_members(self):
         return settings.ENABLE_AUTH_DISCORD or False

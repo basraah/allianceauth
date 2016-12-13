@@ -29,8 +29,8 @@ class DiscordTasks:
             discord_user.uid = user_id
             discord_user.save()
             if settings.DISCORD_SYNC_NAMES:
-                update_discord_nickname.delay(user.pk)
-            update_discord_groups.delay(user.pk)
+                cls.update_nickname.delay(user.pk)
+            cls.update_groups.delay(user.pk)
             return True
         return False
 
@@ -59,11 +59,13 @@ class DiscordTasks:
         else:
             return True
 
-    @classmethod
-    def update_groups(cls, pk, task_self=None):
+    @staticmethod
+    @app.task(bind=True)
+    @only_one(key="Discord", timeout=60 * 5)
+    def update_groups(task_self, pk):
         user = User.objects.get(pk=pk)
         logger.debug("Updating discord groups for user %s" % user)
-        if cls.has_account(user):
+        if DiscordTasks.has_account(user):
             groups = []
             for group in user.groups.all():
                 groups.append(str(group.name))
@@ -84,25 +86,27 @@ class DiscordTasks:
         else:
             logger.debug("User does not have a discord account, skipping")
 
-    @classmethod
-    def update_all_groups(cls):
+    @staticmethod
+    @app.task
+    def update_all_groups():
         logger.debug("Updating ALL discord groups")
         for discord_user in DiscordUser.objects.exclude(uid__exact=''):
-            update_discord_groups.delay(discord_user.user.pk)
+            DiscordTasks.update_groups.delay(discord_user.user.pk)
 
-    @classmethod
-    def update_nickname(cls, pk, task_self=None):
+    @staticmethod
+    @app.task(bind=True)
+    def update_nickname(self, pk):
         user = User.objects.get(pk=pk)
         logger.debug("Updating discord nickname for user %s" % user)
-        if cls.has_account(user):
+        if DiscordTasks.has_account(user):
             character = EveManager.get_main_character(user)
             logger.debug("Updating user %s discord nickname to %s" % (user, character.character_name))
             try:
                 DiscordOAuthManager.update_nickname(user.discord.uid, character.character_name)
             except Exception as e:
-                if task_self:
+                if self:
                     logger.exception("Discord nickname sync failed for %s, retrying in 10 mins" % user)
-                    raise task_self.retry(countdown=60 * 10)
+                    raise self.retry(countdown=60 * 10)
                 else:
                     # Rethrow
                     raise e
@@ -110,11 +114,12 @@ class DiscordTasks:
         else:
             logger.debug("User %s does not have a discord account" % user)
 
-    @classmethod
-    def update_all_nicknames(cls):
+    @staticmethod
+    @app.task
+    def update_all_nicknames():
         logger.debug("Updating ALL discord nicknames")
         for discord_user in DiscordUser.objects.exclude(uid__exact=''):
-            update_discord_nickname.delay(discord_user.user.user_id)
+            DiscordTasks.update_nickname.delay(discord_user.user.user_id)
 
     @classmethod
     def disable(cls):
@@ -125,24 +130,3 @@ class DiscordTasks:
             logger.warn(
                 "ENABLE_BLUE_DISCORD still True, after disabling blues will still be able to link Discord accounts")
         DiscordUser.objects.all().delete()
-
-
-@app.task(bind=True)
-@only_one(key="Discord", timeout=60 * 5)
-def update_discord_groups(self, pk):
-    DiscordTasks.update_groups(pk, task_self=self)
-
-
-@app.task
-def update_all_discord_groups():
-    DiscordTasks.update_all_groups()
-
-
-@app.task(bind=True)
-def update_discord_nickname(self, pk):
-    DiscordTasks.update_nickname(pk, task_self=self)
-
-
-@app.task
-def update_all_discord_nicknames():
-    DiscordTasks.update_all_nicknames()
