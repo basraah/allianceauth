@@ -2,16 +2,12 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from django.template.loader import render_to_string
-from notifications import notify
 
 from services.hooks import ServicesHook, MenuItemHook
 from alliance_auth import hooks
-from authentication.models import AuthServicesInfo
-from authentication.managers import AuthServicesInfoManager
 
 from .urls import urlpatterns
-from .manager import OpenfireManager
-from .tasks import update_all_jabber_groups, update_jabber_groups
+from .tasks import OpenfireTasks
 
 import logging
 
@@ -30,28 +26,22 @@ class OpenfireService(ServicesHook):
         return "Jabber"
 
     def delete_user(self, user, notify_user=False):
-        authinfo = AuthServicesInfo.objects.get_or_create(user=user)[0]
-        if authinfo.jabber_username and authinfo.jabber_username != "":
-            logger.debug("User %s has jabber account %s. Deleting." % (user, authinfo.jabber_username))
-            OpenfireManager.delete_user(authinfo.jabber_username)
-            AuthServicesInfoManager.update_user_jabber_info("", user)
-            if notify_user:
-                notify(user, 'Jabber Account Disabled', level='danger')
-            return True
-        return False
+        logger.debug('Deleting user %s %s account' % (user, self.name))
+        OpenfireTasks.delete_user(user, notify_user=notify_user)
 
     def validate_user(self, user):
-        auth = AuthServicesInfo.objects.get_or_create(user=user)[0]
-        if auth.jabber_username and not self.service_active_for_user(user):
+        logger.debug('Validating user %s %s account' % (user, self.name))
+        if OpenfireTasks.has_account(user) and not self.service_active_for_user(user):
             self.delete_user(user, notify_user=True)
 
     def update_groups(self, user):
-        auth, c = AuthServicesInfo.objects.get_or_create(user=user)
-        if auth.jabber_username:
-            update_jabber_groups.delay(user.pk)
+        logger.debug('Updating %s groups for %s' % (self.name, user))
+        if OpenfireTasks.has_account(user):
+            OpenfireTasks.update_groups.delay(user.pk)
 
     def update_all_groups(self):
-        update_all_jabber_groups.delay()
+        logger.debug('Update all %s groups called' % self.name)
+        OpenfireTasks.update_all_groups.delay()
 
     def service_enabled_members(self):
         return settings.ENABLE_AUTH_JABBER or False  # TODO: Rename this setting
@@ -71,12 +61,11 @@ class OpenfireService(ServicesHook):
         urls.auth_activate = 'auth_activate_openfire'
         urls.auth_deactivate = 'auth_deactivate_openfire'
         urls.auth_reset_password = 'auth_reset_openfire_password'
-        username = AuthServicesInfo.objects.get_or_create(user=request.user)[0].jabber_username
         return render_to_string(self.service_ctrl_template, {
             'service_name': self.title,
             'urls': urls,
             'service_url': self.service_url,
-            'username': username
+            'username': request.user.openfire.username if OpenfireTasks.has_account(request.user) else ''
         }, request=request)
 
 

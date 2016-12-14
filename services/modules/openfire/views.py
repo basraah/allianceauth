@@ -6,15 +6,14 @@ from django.contrib.auth.models import Group
 from django.shortcuts import render, redirect
 
 from authentication.decorators import members_and_blues
-from authentication.managers import AuthServicesInfoManager
-from authentication.models import AuthServicesInfo
 from eveonline.managers import EveManager
 from eveonline.models import EveCharacter
 from services.forms import ServicePasswordForm
 
 from .manager import OpenfireManager
-from .tasks import update_jabber_groups
+from .tasks import OpenfireTasks
 from .forms import JabberBroadcastForm
+from .models import OpenfireUser
 
 import datetime
 
@@ -27,15 +26,14 @@ logger = logging.getLogger(__name__)
 @members_and_blues()
 def activate_jabber(request):
     logger.debug("activate_jabber called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    character = EveManager.get_character_by_id(authinfo.main_char_id)
+    character = EveManager.get_main_character(request.user)
     logger.debug("Adding jabber user for user %s with main character %s" % (request.user, character))
     info = OpenfireManager.add_user(character.character_name)
     # If our username is blank means we already had a user
     if info[0] is not "":
-        AuthServicesInfoManager.update_user_jabber_info(info[0], request.user)
+        OpenfireUser.objects.update_or_create(user=request.user, defaults={'username': info[0]})
         logger.debug("Updated authserviceinfo for user %s with jabber credentials. Updating groups." % request.user)
-        update_jabber_groups.delay(request.user.pk)
+        OpenfireTasks.update_groups.delay(request.user.pk)
         logger.info("Successfully activated jabber for user %s" % request.user)
         messages.success(request, 'Activated jabber account.')
         credentials = {
@@ -54,11 +52,7 @@ def activate_jabber(request):
 @members_and_blues()
 def deactivate_jabber(request):
     logger.debug("deactivate_jabber called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    result = OpenfireManager.delete_user(authinfo.jabber_username)
-    # If our username is blank means we failed
-    if result:
-        AuthServicesInfoManager.update_user_jabber_info("", request.user)
+    if OpenfireTasks.has_account(request.user) and OpenfireTasks.delete_user(request.user):
         logger.info("Successfully deactivated jabber for user %s" % request.user)
         messages.success(request, 'Deactivated jabber account.')
     else:
@@ -71,22 +65,20 @@ def deactivate_jabber(request):
 @members_and_blues()
 def reset_jabber_password(request):
     logger.debug("reset_jabber_password called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    result = OpenfireManager.update_user_pass(authinfo.jabber_username)
-    # If our username is blank means we failed
-    if result != "":
-        AuthServicesInfoManager.update_user_jabber_info(authinfo.jabber_username, request.user)
-        logger.info("Successfully reset jabber password for user %s" % request.user)
-        messages.success(request, 'Reset jabber password.')
-        credentials = {
-            'username': authinfo.jabber_username,
-            'password': result,
-        }
-        return render(request, 'registered/service_credentials.html',
-                      context={'credentials': credentials, 'service': 'Jabber'})
-    else:
-        logger.error("Unsuccessful attempt to reset jabber for user %s" % request.user)
-        messages.error(request, 'An error occurred while processing your jabber account.')
+    if OpenfireTasks.has_account(request.user):
+        result = OpenfireManager.update_user_pass(request.user.openfire.username)
+        # If our username is blank means we failed
+        if result != "":
+            logger.info("Successfully reset jabber password for user %s" % request.user)
+            messages.success(request, 'Reset jabber password.')
+            credentials = {
+                'username': request.user.openfire.username,
+                'password': result,
+            }
+            return render(request, 'registered/service_credentials.html',
+                          context={'credentials': credentials, 'service': 'Jabber'})
+    logger.error("Unsuccessful attempt to reset jabber for user %s" % request.user)
+    messages.error(request, 'An error occurred while processing your jabber account.')
     return redirect("auth_services")
 
 
@@ -107,10 +99,9 @@ def jabber_broadcast_view(request):
         form.fields['group'].choices = allchoices
         logger.debug("Received POST request containing form, valid: %s" % form.is_valid())
         if form.is_valid():
-            user_info = AuthServicesInfo.objects.get(user=request.user)
-            main_char = EveCharacter.objects.get(character_id=user_info.main_char_id)
-            logger.debug("Processing jabber broadcast for user %s with main character %s" % (user_info, main_char))
-            if user_info.main_char_id != "":
+            main_char = EveManager.get_main_character(request.user)
+            logger.debug("Processing jabber broadcast for user %s with main character %s" % (request.user, main_char))
+            if main_char is not None:
                 message_to_send = form.cleaned_data[
                                       'message'] + "\n##### SENT BY: " + "[" + main_char.corporation_ticker + "]" + \
                                   main_char.character_name + " TO: " + \
@@ -140,6 +131,7 @@ def jabber_broadcast_view(request):
     context = {'form': form}
     return render(request, 'registered/jabberbroadcast.html', context=context)
 
+
 @login_required
 @members_and_blues()
 def set_jabber_password(request):
@@ -148,11 +140,10 @@ def set_jabber_password(request):
         logger.debug("Received POST request with form.")
         form = ServicePasswordForm(request.POST)
         logger.debug("Form is valid: %s" % form.is_valid())
-        if form.is_valid():
+        if form.is_valid() and OpenfireTasks.has_account(request.user):
             password = form.cleaned_data['password']
             logger.debug("Form contains password of length %s" % len(password))
-            authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-            result = OpenfireManager.update_user_pass(authinfo.jabber_username, password=password)
+            result = OpenfireManager.update_user_pass(request.user.openfire.username, password=password)
             if result != "":
                 logger.info("Successfully set jabber password for user %s" % request.user)
                 messages.success(request, 'Set jabber password.')
