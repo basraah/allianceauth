@@ -5,13 +5,12 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
 from authentication.decorators import members_and_blues
-from authentication.managers import AuthServicesInfoManager
-from authentication.models import AuthServicesInfo
 from services.forms import ServicePasswordForm
 from eveonline.managers import EveManager
 
 from .manager import IPBoardManager
-from .tasks import update_ipboard_groups
+from .tasks import IpboardTasks
+from .models import IpboardUser
 
 import logging
 
@@ -22,15 +21,16 @@ logger = logging.getLogger(__name__)
 @members_and_blues()
 def activate_ipboard_forum(request):
     logger.debug("activate_ipboard_forum called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    # Valid now we get the main characters
-    character = EveManager.get_character_by_id(authinfo.main_char_id)
+    character = EveManager.get_main_character(request.user)
     logger.debug("Adding ipboard user for user %s with main character %s" % (request.user, character))
     result = IPBoardManager.add_user(character.character_name, request.user.email)
     if result[0] != "":
-        AuthServicesInfoManager.update_user_ipboard_info(result[0], request.user)
+        ipboard_user = IpboardUser()
+        ipboard_user.user = request.user
+        ipboard_user.username = result[0]
+        ipboard_user.save()
         logger.debug("Updated authserviceinfo for user %s with ipboard credentials. Updating groups." % request.user)
-        update_ipboard_groups.delay(request.user.pk)
+        IpboardTasks.update_groups.delay(request.user.pk)
         logger.info("Successfully activated ipboard for user %s" % request.user)
         messages.success(request, 'Activated IPBoard account.')
         credentials = {
@@ -49,11 +49,8 @@ def activate_ipboard_forum(request):
 @members_and_blues()
 def deactivate_ipboard_forum(request):
     logger.debug("deactivate_ipboard_forum called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    result = IPBoardManager.disable_user(authinfo.ipboard_username)
     # false we failed
-    if result:
-        AuthServicesInfoManager.update_user_ipboard_info("", request.user)
+    if IpboardTasks.delete_user(request.user):
         logger.info("Successfully deactivated ipboard for user %s" % request.user)
         messages.success(request, 'Deactivated IPBoard account.')
     else:
@@ -71,11 +68,10 @@ def set_ipboard_password(request):
         logger.debug("Received POST request with form.")
         form = ServicePasswordForm(request.POST)
         logger.debug("Form is valid: %s" % form.is_valid())
-        if form.is_valid():
+        if form.is_valid() and IpboardTasks.has_account(request.user):
             password = form.cleaned_data['password']
             logger.debug("Form contains password of length %s" % len(password))
-            authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-            result = IPBoardManager.update_user_password(authinfo.ipboard_username, request.user.email,
+            result = IPBoardManager.update_user_password(request.user.ipboard.username, request.user.email,
                                                          plain_password=password)
             if result != "":
                 logger.info("Successfully set IPBoard password for user %s" % request.user)
@@ -97,20 +93,18 @@ def set_ipboard_password(request):
 @members_and_blues()
 def reset_ipboard_password(request):
     logger.debug("reset_ipboard_password called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    result = IPBoardManager.update_user_password(authinfo.ipboard_username, request.user.email)
-    if result != "":
-        logger.info("Successfully reset ipboard password for user %s" % request.user)
-        messages.success(request, 'Reset IPBoard password.')
-        credentials = {
-            'username': authinfo.ipboard_username,
-            'password': result,
-        }
-        return render(request, 'registered/service_credentials.html',
-                      context={'credentials': credentials, 'service': 'IPBoard'})
-    else:
-        logger.error("UnSuccessful attempt to reset ipboard password for user %s" % request.user)
-        messages.error(request, 'An error occurred while processing your IPBoard account.')
+    if IpboardTasks.has_account(request.user):
+        result = IPBoardManager.update_user_password(request.user.ipboard.username, request.user.email)
+        if result != "":
+            logger.info("Successfully reset ipboard password for user %s" % request.user)
+            messages.success(request, 'Reset IPBoard password.')
+            credentials = {
+                'username': request.user.ipboard.username,
+                'password': result,
+            }
+            return render(request, 'registered/service_credentials.html',
+                          context={'credentials': credentials, 'service': 'IPBoard'})
+
+    logger.error("UnSuccessful attempt to reset ipboard password for user %s" % request.user)
+    messages.error(request, 'An error occurred while processing your IPBoard account.')
     return redirect("auth_services")
-
-

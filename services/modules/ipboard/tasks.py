@@ -1,54 +1,73 @@
 from __future__ import unicode_literals
 
-from celery import task
+from alliance_auth.celery import app
 from django.conf import settings
 from django.contrib.auth.models import User
-
-from authentication.models import AuthServicesInfo
-from eveonline.managers import EveManager
+from django.core.exceptions import ObjectDoesNotExist
+from notifications import notify
 
 from .manager import IPBoardManager
+from .models import IpboardUser
 
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-@task(bind=True)
-def update_ipboard_groups(self, pk):
-    user = User.objects.get(pk=pk)
-    logger.debug("Updating user %s ipboard groups." % user)
-    authserviceinfo = AuthServicesInfo.objects.get(user=user)
-    groups = []
-    for group in user.groups.all():
-        groups.append(str(group.name))
-    if len(groups) == 0:
-        groups.append('empty')
-    logger.debug("Updating user %s ipboard groups to %s" % (user, groups))
-    try:
-        IPBoardManager.update_groups(authserviceinfo.ipboard_username, groups)
-    except:
-        logger.exception("IPBoard group sync failed for %s, retrying in 10 mins" % user)
-        raise self.retry(countdown=60 * 10)
-    logger.debug("Updated user %s ipboard groups." % user)
+class IpboardTasks:
+    def __init__(self):
+        pass
 
+    @classmethod
+    def delete_user(cls, user, notify_user=False):
+        if cls.has_account(user):
+            if IPBoardManager.disable_user(user.ipboard.username):
+                user.ipboard.delete()
+                if notify_user:
+                    notify(user, 'IPBoard Account Disabled', level='danger')
+                return True
+        return False
 
-@task
-def update_all_ipboard_groups():
-    logger.debug("Updating ALL ipboard groups")
-    for user in AuthServicesInfo.objects.exclude(ipboard_username__exact=''):
-        update_ipboard_groups.delay(user.user_id)
+    @staticmethod
+    def has_account(user):
+        try:
+            return user.ipboard.username != ''
+        except ObjectDoesNotExist:
+            return False
 
+    @staticmethod
+    @app.task(bind=True)
+    def update_groups(self, pk):
+        user = User.objects.get(pk=pk)
+        logger.debug("Updating user %s ipboard groups." % user)
+        groups = []
+        for group in user.groups.all():
+            groups.append(str(group.name))
+        if len(groups) == 0:
+            groups.append('empty')
+        logger.debug("Updating user %s ipboard groups to %s" % (user, groups))
+        try:
+            IPBoardManager.update_groups(user.ipboard.username, groups)
+        except:
+            logger.exception("IPBoard group sync failed for %s, retrying in 10 mins" % user)
+            raise self.retry(countdown=60 * 10)
+        logger.debug("Updated user %s ipboard groups." % user)
 
-def disable_ipboard():
-    if settings.ENABLE_AUTH_IPBOARD:
-        logger.warn(
-            "ENABLE_AUTH_IPBOARD still True, after disabling users will still be able to create IPBoard accounts")
-    if settings.ENABLE_BLUE_IPBOARD:
-        logger.warn(
-            "ENABLE_BLUE_IPBOARD still True, after disabling blues will still be able to create IPBoard accounts")
-    for auth in AuthServicesInfo.objects.all():
-        if auth.ipboard_username:
-            logger.info("Clearing %s ipboard username" % auth.user)
-            auth.ipboard_username = ''
-            auth.save()
+    @staticmethod
+    @app.task
+    def update_all_groups():
+        logger.debug("Updating ALL ipboard groups")
+        for ipboard_user in IpboardUser.objects.exclude(username__exact=''):
+            IpboardTasks.update_groups.delay(ipboard_user.user.pk)
+
+    @staticmethod
+    @app.task
+    def disable():
+        if settings.ENABLE_AUTH_IPBOARD:
+            logger.warn(
+                "ENABLE_AUTH_IPBOARD still True, after disabling users will still be able to create IPBoard accounts")
+        if settings.ENABLE_BLUE_IPBOARD:
+            logger.warn(
+                "ENABLE_BLUE_IPBOARD still True, after disabling blues will still be able to create IPBoard accounts")
+        logger.debug("Deleting all Ipboard Users")
+        IpboardUser.objects.all().delete()
