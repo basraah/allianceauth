@@ -2,17 +2,13 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from django.template.loader import render_to_string
-from django.contrib import messages
-from notifications import notify
 
 from services.hooks import ServicesHook
 from alliance_auth import hooks
-from authentication.models import AuthServicesInfo
-from eveonline.models import EveCharacter
+from eveonline.managers import EveManager
 
 from .urls import urlpatterns
-from .manager import DiscourseManager
-from .tasks import update_discourse_groups, update_all_discourse_groups
+from .tasks import DiscourseTasks
 
 import logging
 
@@ -27,29 +23,22 @@ class DiscourseService(ServicesHook):
         self.service_ctrl_template = 'registered/discourse_service_ctrl.html'
 
     def delete_user(self, user, notify_user=False):
-        authinfo = AuthServicesInfo.objects.get_or_create(user=user)[0]
-        if authinfo.discourse_enabled:
-            logger.debug("User %s has a Discourse account. Disabling login." % user)
-            DiscourseManager.disable_user(user)
-            authinfo.discourse_enabled = False
-            authinfo.save()
-            if notify_user:
-                notify(user, 'Discourse Account Disabled', level='danger')
-            return True
-        return False
+        logger.debug('Deleting user %s %s account' % (user, self.name))
+        DiscourseTasks.delete_user(user, notify_user=notify_user)
 
     def update_groups(self, user):
-        authinfo = AuthServicesInfo.objects.get_or_create(user=user)[0]
-        if authinfo.discourse_enabled:
-            update_discourse_groups.delay(user.pk)
+        logger.debug('Processing %s groups for %s' % (self.name, user))
+        if DiscourseTasks.has_account(user):
+            DiscourseTasks.update_groups.delay(user.pk)
 
     def validate_user(self, user):
-        auth = AuthServicesInfo.objects.get_or_create(user=user)[0]
-        if auth.discourse_enabled and not self.service_active_for_user(user):
+        logger.debug('Validating user %s %s account' % (user, self.name))
+        if DiscourseTasks.has_account(user) and not self.service_active_for_user(user):
             self.delete_user(user, notify_user=True)
 
     def update_all_groups(self):
-        update_all_discourse_groups.delay()
+        logger.debug('Update all %s groups called' % self.name)
+        DiscourseTasks.update_all_groups.delay()
 
     def service_enabled_members(self):
         return settings.ENABLE_AUTH_DISCOURSE or False
@@ -58,15 +47,8 @@ class DiscourseService(ServicesHook):
         return settings.ENABLE_BLUE_DISCOURSE or False
 
     def render_services_ctrl(self, request):
-        auth = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-        char = None
-        if auth.main_char_id:
-            try:
-                char = EveCharacter.objects.get(character_id=auth.main_char_id)
-            except EveCharacter.DoesNotExist:
-                messages.warning(request, "There's a problem with your main character. Please select a new one.")
         return render_to_string(self.service_ctrl_template, {
-            'char': char
+            'char': EveManager.get_main_character(request.user)
         }, request=request)
 
 

@@ -4,12 +4,14 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from authentication.models import AuthServicesInfo
 from authentication.states import MEMBER_STATE, BLUE_STATE, NONE_STATE
 from eveonline.models import EveCharacter
+from eveonline.managers import EveManager
+from authentication.models import AuthServicesInfo
 
 from .manager import DiscourseManager
-from .tasks import update_discourse_groups
+from .tasks import DiscourseTasks
+from .models import DiscourseUser
 
 import base64
 import hmac
@@ -49,11 +51,11 @@ def discourse_sso(request):
     if not auth.main_char_id:
         messages.error(request, "You must have a main character set to access Discourse.")
         return redirect('auth_characters')
-    try:
-       main_char = EveCharacter.objects.get(character_id=auth.main_char_id)
-    except EveCharacter.DoesNotExist:
-       messages.error(request, "Your main character is missing a database model. Please select a new one.")
-       return redirect('auth_characters')
+
+    main_char = EveManager.get_main_character(request.user)
+    if main_char is None:
+        messages.error(request, "Your main character is missing a database model. Please select a new one.")
+        return redirect('auth_characters')
 
     payload = request.GET.get('sso')
     signature = request.GET.get('sig')
@@ -104,9 +106,11 @@ def discourse_sso(request):
     ## Record activation and queue group sync
 
     if not auth.discourse_enabled:
-        auth.discourse_enabled = True
-        auth.save()
-        update_discourse_groups.apply_async(args=[request.user.pk], countdown=30) # wait 30s for new user creation on Discourse
+        discourse_user = DiscourseUser()
+        discourse_user.user = request.user
+        discourse_user.enabled = True
+        discourse_user.save()
+        DiscourseTasks.update_groups.apply_async(args=[request.user.pk], countdown=30) # wait 30s for new user creation on Discourse
 
     ## Redirect back to Discourse
 
