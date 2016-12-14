@@ -3,18 +3,16 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 
 from authentication.decorators import members_and_blues
-from authentication.models import AuthServicesInfo
-from authentication.managers import AuthServicesInfoManager
 from eveonline.managers import EveManager
 from eveonline.models import EveAllianceInfo
 from authentication.states import MEMBER_STATE, BLUE_STATE, NONE_STATE
-
+from authentication.models import AuthServicesInfo
 
 from services.forms import ServicePasswordForm
 
 from .manager import MumbleManager
-
-from .tasks import update_mumble_groups
+from .tasks import MumbleTasks
+from .models import MumbleUser
 
 import logging
 
@@ -26,7 +24,7 @@ logger = logging.getLogger(__name__)
 def activate_mumble(request):
     logger.debug("activate_mumble called by user %s" % request.user)
     authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    character = EveManager.get_character_by_id(authinfo.main_char_id)
+    character = EveManager.get_main_character(request.user)
     ticker = character.corporation_ticker
 
     if authinfo.state == BLUE_STATE:
@@ -35,16 +33,14 @@ def activate_mumble(request):
         if EveAllianceInfo.objects.filter(alliance_id=character.alliance_id).exists():
             alliance = EveAllianceInfo.objects.filter(alliance_id=character.alliance_id)[0]
             ticker = alliance.alliance_ticker
-        result = MumbleManager.create_blue_user(ticker, character.character_name)
+        result = MumbleManager.create_user(request.user, ticker, character.character_name, blue=True)
     else:
         logger.debug("Adding mumble user for user %s with main character %s" % (request.user, character))
-        result = MumbleManager.create_user(ticker, character.character_name)
+        result = MumbleManager.create_user(request.user, ticker, character.character_name)
 
-    # if its empty we failed
-    if result[0] is not "":
-        AuthServicesInfoManager.update_user_mumble_info(result[0], request.user)
+    if result:
         logger.debug("Updated authserviceinfo for user %s with mumble credentials. Updating groups." % request.user)
-        update_mumble_groups.delay(request.user.pk)
+        MumbleTasks.update_groups.apply(request.user.pk)  # Run synchronously to prevent timing issues
         logger.info("Successfully activated mumble for user %s" % request.user)
         messages.success(request, 'Activated Mumble account.')
         credentials = {
@@ -63,10 +59,8 @@ def activate_mumble(request):
 @members_and_blues()
 def deactivate_mumble(request):
     logger.debug("deactivate_mumble called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
     # if we successfully remove the user or the user is already removed
-    if MumbleManager.delete_user(authinfo.mumble_username) or not MumbleManager.user_exists(authinfo.mumble_username):
-        AuthServicesInfoManager.update_user_mumble_info("", request.user)
+    if MumbleManager.delete_user(request.user):
         logger.info("Successfully deactivated mumble for user %s" % request.user)
         messages.success(request, 'Deactivated Mumble account.')
     else:
@@ -79,15 +73,14 @@ def deactivate_mumble(request):
 @members_and_blues()
 def reset_mumble_password(request):
     logger.debug("reset_mumble_password called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    result = MumbleManager.update_user_password(authinfo.mumble_username)
+    result = MumbleManager.update_user_password(request.user)
 
     # if blank we failed
     if result != "":
         logger.info("Successfully reset mumble password for user %s" % request.user)
         messages.success(request, 'Reset Mumble password.')
         credentials = {
-            'username': authinfo.mumble_username,
+            'username': request.user.mumble.username,
             'password': result,
         }
         return render(request, 'registered/service_credentials.html',
@@ -106,11 +99,10 @@ def set_mumble_password(request):
         logger.debug("Received POST request with form.")
         form = ServicePasswordForm(request.POST)
         logger.debug("Form is valid: %s" % form.is_valid())
-        if form.is_valid():
+        if form.is_valid() and MumbleTasks.has_account(request.user):
             password = form.cleaned_data['password']
             logger.debug("Form contains password of length %s" % len(password))
-            authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-            result = MumbleManager.update_user_password(authinfo.mumble_username, password=password)
+            result = MumbleManager.update_user_password(request.user, password=password)
             if result != "":
                 logger.info("Successfully reset forum password for user %s" % request.user)
                 messages.success(request, 'Set Mumble password.')

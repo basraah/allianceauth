@@ -5,7 +5,7 @@ from django.db import models
 
 @python_2_unicode_compatible
 class MumbleUser(models.Model):
-    user = models.ForeignKey('auth.User', related_name='mumble', null=True)
+    user = models.OneToOneField('auth.User', related_name='mumble', null=True)
     username = models.CharField(max_length=254, unique=True)
     pwhash = models.CharField(max_length=40)
     groups = models.TextField(blank=True, null=True)
