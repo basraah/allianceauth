@@ -5,12 +5,12 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
 from authentication.decorators import members_and_blues
-from authentication.managers import AuthServicesInfoManager
-from authentication.models import AuthServicesInfo
 from eveonline.managers import EveManager
 from services.forms import ServicePasswordForm
 
 from .manager import Ips4Manager
+from .models import Ips4User
+from .tasks import Ips4Tasks
 
 import logging
 
@@ -21,14 +21,12 @@ logger = logging.getLogger(__name__)
 @members_and_blues()
 def activate_ips4(request):
     logger.debug("activate_ips4 called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    # Valid now we get the main characters
-    character = EveManager.get_character_by_id(authinfo.main_char_id)
+    character = EveManager.get_main_character(request.user)
     logger.debug("Adding IPS4 user for user %s with main character %s" % (request.user, character))
     result = Ips4Manager.add_user(character.character_name, request.user.email)
     # if empty we failed
-    if result[0] != "":
-        AuthServicesInfoManager.update_user_ips4_info(result[0], result[2], request.user)
+    if result[0] != "" and not Ips4Tasks.has_account(request.user):
+        ips_user = Ips4User.objects.create(user=request.user, id=result[2], username=result[0])
         logger.debug("Updated authserviceinfo for user %s with IPS4 credentials." % request.user)
         # update_ips4_groups.delay(request.user.pk)
         logger.info("Successfully activated IPS4 for user %s" % request.user)
@@ -49,21 +47,21 @@ def activate_ips4(request):
 @members_and_blues()
 def reset_ips4_password(request):
     logger.debug("reset_ips4_password called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    result = Ips4Manager.update_user_password(authinfo.ips4_username)
-    # false we failed
-    if result != "":
-        logger.info("Successfully reset IPS4 password for user %s" % request.user)
-        messages.success(request, 'Reset IPSuite4 password.')
-        credentials = {
-            'username': authinfo.ips4_username,
-            'password': result,
-        }
-        return render(request, 'registered/service_credentials.html',
-                      context={'credentials': credentials, 'service': 'IPSuite4'})
-    else:
-        logger.error("Unsuccessful attempt to reset IPS4 password for user %s" % request.user)
-        messages.error(request, 'An error occurred while processing your IPSuite4 account.')
+    if Ips4Tasks.has_account(request.user):
+        result = Ips4Manager.update_user_password(request.user.ips4.username)
+        # false we failed
+        if result != "":
+            logger.info("Successfully reset IPS4 password for user %s" % request.user)
+            messages.success(request, 'Reset IPSuite4 password.')
+            credentials = {
+                'username': request.user.ips4.username,
+                'password': result,
+            }
+            return render(request, 'registered/service_credentials.html',
+                          context={'credentials': credentials, 'service': 'IPSuite4'})
+
+    logger.error("Unsuccessful attempt to reset IPS4 password for user %s" % request.user)
+    messages.error(request, 'An error occurred while processing your IPSuite4 account.')
     return redirect("auth_services")
 
 
@@ -75,11 +73,10 @@ def set_ips4_password(request):
         logger.debug("Received POST request with form.")
         form = ServicePasswordForm(request.POST)
         logger.debug("Form is valid: %s" % form.is_valid())
-        if form.is_valid():
+        if form.is_valid() and Ips4Tasks.has_account(request.user):
             password = form.cleaned_data['password']
             logger.debug("Form contains password of length %s" % len(password))
-            authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-            result = Ips4Manager.update_custom_password(authinfo.ips4_username, plain_password=password)
+            result = Ips4Manager.update_custom_password(request.user.ips4.username, plain_password=password)
             if result != "":
                 logger.info("Successfully set IPS4 password for user %s" % request.user)
                 messages.success(request, 'Set IPSuite4 password.')
@@ -100,10 +97,7 @@ def set_ips4_password(request):
 @members_and_blues()
 def deactivate_ips4(request):
     logger.debug("deactivate_ips4 called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
-    result = Ips4Manager.delete_user(authinfo.ips4_id)
-    if result != "":
-        AuthServicesInfoManager.update_user_ips4_info("", "", request.user)
+    if Ips4Tasks.delete_user(request.user):
         logger.info("Successfully deactivated IPS4 for user %s" % request.user)
         messages.success(request, 'Deactivated IPSuite4 account.')
     else:

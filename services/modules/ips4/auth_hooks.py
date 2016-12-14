@@ -5,9 +5,9 @@ from django.template.loader import render_to_string
 
 from services.hooks import ServicesHook
 from alliance_auth import hooks
-from authentication.models import AuthServicesInfo
 
 from .urls import urlpatterns
+from .tasks import Ips4Tasks
 
 
 class Ips4Service(ServicesHook):
@@ -40,12 +40,11 @@ class Ips4Service(ServicesHook):
         urls.auth_deactivate = 'auth_deactivate_ips4'
         urls.auth_reset_password = 'auth_reset_ips4_password'
         urls.auth_set_password = 'auth_set_ips4_password'
-        username = AuthServicesInfo.objects.get_or_create(user=request.user)[0].ips4_username
         return render_to_string(self.service_ctrl_template, {
             'service_name': self.title,
             'urls': urls,
             'service_url': self.service_url,
-            'username': username
+            'username': request.user.ips4.username if Ips4Tasks.has_account(request.user) else ''
         }, request=request)
 
 
