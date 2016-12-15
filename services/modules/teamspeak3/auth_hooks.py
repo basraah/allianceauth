@@ -2,17 +2,12 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from django.template.loader import render_to_string
-from notifications import notify
 
 from services.hooks import ServicesHook
 from alliance_auth import hooks
 
 from .urls import urlpatterns
-from .tasks import update_teamspeak3_groups, update_all_teamspeak3_groups
-from .manager import Teamspeak3Manager
-
-from authentication.managers import AuthServicesInfoManager
-from authentication.models import AuthServicesInfo
+from .tasks import Teamspeak3Tasks
 
 import logging
 
@@ -27,28 +22,21 @@ class Teamspeak3Service(ServicesHook):
         self.service_ctrl_template = 'registered/teamspeak3_service_ctrl.html'
 
     def delete_user(self, user, notify_user=False):
-        authinfo = AuthServicesInfo.objects.get_or_create(user=user)[0]
-        if authinfo.teamspeak3_uid and authinfo.teamspeak3_uid != "":
-            logger.debug("User %s has %s account %s. Deleting." % (user, self.name, authinfo.teamspeak3_uid))
-            Teamspeak3Manager.delete_user(authinfo.teamspeak3_uid)
-            AuthServicesInfoManager.update_user_teamspeak3_info("", "", user)
-            if notify_user:
-                notify(user, 'TeamSpeak3 Account Disabled', level='danger')
-            return True
-        return False
+        logger.debug('Deleting user %s %s account' % (user, self.name))
+        Teamspeak3Tasks.delete_user(user, notify_user=notify_user)
 
     def update_groups(self, user):
-        logger.debug("Updating %s groups for %s" % (self.name, user))
-        update_teamspeak3_groups.delay(user.pk)
+        logger.debug('Updating %s groups for %s' % (self.name, user))
+        Teamspeak3Tasks.update_groups.delay(user.pk)
 
     def validate_user(self, user):
-        auth = AuthServicesInfo.objects.get_or_create(user=user)[0]
-        if auth.teamspeak3_uid and not self.service_active_for_user(user):
+        logger.debug('Validating user %s %s account' % (user, self.name))
+        if Teamspeak3Tasks.has_account(user) and not self.service_active_for_user(user):
             self.delete_user(user, notify_user=True)
 
     def update_all_groups(self):
-        logger.debug("Updating all %s groups" % self.name)
-        update_all_teamspeak3_groups.delay()
+        logger.debug('Update all %s groups called' % self.name)
+        Teamspeak3Tasks.update_all_groups.delay()
 
     def service_enabled_members(self):
         return settings.ENABLE_AUTH_TEAMSPEAK3 or False
@@ -57,7 +45,12 @@ class Teamspeak3Service(ServicesHook):
         return settings.ENABLE_BLUE_TEAMSPEAK3 or False
 
     def render_services_ctrl(self, request):
-        authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
+        authinfo = {'teamspeak3_uid': '',
+                    'teamspeak3_perm_key': '',}
+        if Teamspeak3Tasks.has_account(request.user):
+            authinfo['teamspeak3_uid'] = request.user.teamspeak3.uid
+            authinfo['teamspeak3_perm_key'] = request.user.teamspeak3.perm_key
+
         return render_to_string(self.service_ctrl_template, {
             'authinfo': authinfo,
         }, request=request)
