@@ -2,15 +2,12 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from django.template.loader import render_to_string
-from notifications import notify
 
 from services.hooks import ServicesHook
 from alliance_auth import hooks
-from authentication.models import AuthServicesInfo
-from authentication.managers import AuthServicesInfoManager
 
 from .urls import urlpatterns
-from .manager import XenForoManager
+from .tasks import XenforoTasks
 
 import logging
 
@@ -28,19 +25,12 @@ class XenforoService(ServicesHook):
         return 'XenForo Forums'
 
     def delete_user(self, user, notify_user=False):
-        authinfo = AuthServicesInfo.objects.get_or_create(user=user)[0]
-        if authinfo.xenforo_username and authinfo.xenforo_password != "":
-            logger.debug("User %s has a XenForo account %s. Deleting." % (user, authinfo.xenforo_username))
-            XenForoManager.disable_user(authinfo.xenforo_username)
-            AuthServicesInfoManager.update_user_xenforo_info("", user)
-            if notify_user:
-                notify(user, 'XenForo Account Disabled', level='danger')
-            return True
-        return False
+        logger.debug('Deleting user %s %s account' % (user, self.name))
+        XenforoTasks.delete_user(user, notify_user=notify_user)
 
     def validate_user(self, user):
-        auth = AuthServicesInfo.objects.get_or_create(user=user)[0]
-        if auth.xenforo_username and not self.service_active_for_user(user):
+        logger.debug('Validating user %s %s account' % (user, self.name))
+        if XenforoTasks.has_account(user) and not self.service_active_for_user(user):
             self.delete_user(user, notify_user=True)
 
     def update_groups(self, user):
@@ -61,12 +51,11 @@ class XenforoService(ServicesHook):
         urls.auth_deactivate = 'auth_deactivate_xenforo'
         urls.auth_reset_password = 'auth_reset_xenforo_password'
         urls.auth_set_password = 'auth_set_xenforo_password'
-        username = AuthServicesInfo.objects.get_or_create(user=request.user)[0].xenforo_username
         return render_to_string(self.service_ctrl_template, {
             'service_name': self.title,
             'urls': urls,
             'service_url': '',
-            'username': username
+            'username': request.user.xenforo.username if XenforoTasks.has_account(request.user) else ''
         }, request=request)
 
 
