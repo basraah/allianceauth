@@ -1,12 +1,16 @@
 from __future__ import unicode_literals
-from django.conf.urls import url
+from django.conf.urls import url, include
 
 from . import views
 
-urlpatterns = [
+module_urls = [
     # IPS4 Service Control
-    url(r'^activate_ips4/$', views.activate_ips4, name='auth_activate_ips4'),
-    url(r'^deactivate_ips4/$', views.deactivate_ips4, name='auth_deactivate_ips4'),
-    url(r'^reset_ips4_password/$', views.reset_ips4_password, name='auth_reset_ips4_password'),
-    url(r'^set_ips4_password/$', views.set_ips4_password, name='auth_set_ips4_password'),
+    url(r'^activate/$', views.activate_ips4, name='auth_activate_ips4'),
+    url(r'^deactivate/$', views.deactivate_ips4, name='auth_deactivate_ips4'),
+    url(r'^reset_password/$', views.reset_ips4_password, name='auth_reset_ips4_password'),
+    url(r'^set_password/$', views.set_ips4_password, name='auth_set_ips4_password'),
+]
+
+urlpatterns = [
+    url(r'^ips4/', include(module_urls))
 ]
