@@ -5,6 +5,3 @@ from django.apps import AppConfig
 
 class Phpbb3ServiceConfig(AppConfig):
     name = 'phpbb3'
-
-    def ready(self):
-        import services.signals

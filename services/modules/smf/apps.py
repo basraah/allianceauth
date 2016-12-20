@@ -5,6 +5,3 @@ from django.apps import AppConfig
 
 class SmfServiceConfig(AppConfig):
     name = 'smf'
-
-    def ready(self):
-        import services.signals

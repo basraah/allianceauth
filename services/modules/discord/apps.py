@@ -5,6 +5,3 @@ from django.apps import AppConfig
 
 class DiscordServiceConfig(AppConfig):
     name = 'discord'
-
-    def ready(self):
-        import services.signals

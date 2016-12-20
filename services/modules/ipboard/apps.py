@@ -5,6 +5,3 @@ from django.apps import AppConfig
 
 class IpboardServiceConfig(AppConfig):
     name = 'ipboard'
-
-    def ready(self):
-        import services.signals

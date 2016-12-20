@@ -5,6 +5,3 @@ from django.apps import AppConfig
 
 class Teamspeak3ServiceConfig(AppConfig):
     name = 'teamspeak3'
-
-    def ready(self):
-        import services.signals

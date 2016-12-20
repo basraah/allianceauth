@@ -5,6 +5,3 @@ from django.apps import AppConfig
 
 class MarketServiceConfig(AppConfig):
     name = 'market'
-
-    def ready(self):
-        import services.signals

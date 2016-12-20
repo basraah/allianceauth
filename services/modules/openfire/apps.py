@@ -5,6 +5,3 @@ from django.apps import AppConfig
 
 class OpenfireServiceConfig(AppConfig):
     name = 'openfire'
-
-    def ready(self):
-        import services.signals
