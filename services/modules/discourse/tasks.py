@@ -44,7 +44,6 @@ class DiscourseTasks:
 
     @staticmethod
     @app.task(bind=True)
-    @only_one(key="Discourse", timeout=60*5)
     def update_groups(self, pk):
         user = User.objects.get(pk=pk)
         logger.debug("Updating discourse groups for user %s" % user)
