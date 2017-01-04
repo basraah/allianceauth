@@ -58,4 +58,5 @@ For a manual upgrade, execute the commands in this order:
     features/index
     installation/index
     maintenance/index
+    development/index
 ```
