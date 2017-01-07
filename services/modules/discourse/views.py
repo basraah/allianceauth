@@ -105,7 +105,7 @@ def discourse_sso(request):
 
     ## Record activation and queue group sync
 
-    if not auth.discourse_enabled:
+    if not DiscourseTasks.has_account(request.user):
         discourse_user = DiscourseUser()
         discourse_user.user = request.user
         discourse_user.enabled = True
