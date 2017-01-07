@@ -24,7 +24,7 @@ class DiscourseService(ServicesHook):
 
     def delete_user(self, user, notify_user=False):
         logger.debug('Deleting user %s %s account' % (user, self.name))
-        DiscourseTasks.delete_user(user, notify_user=notify_user)
+        return DiscourseTasks.delete_user(user, notify_user=notify_user)
 
     def update_groups(self, user):
         logger.debug('Processing %s groups for %s' % (self.name, user))
