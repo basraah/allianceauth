@@ -9,6 +9,8 @@ from authentication.tasks import make_member, make_blue
 from authentication.models import AuthServicesInfo
 from authentication.states import MEMBER_STATE, BLUE_STATE, NONE_STATE
 
+from eveonline.models import EveCharacter
+
 
 class AuthUtils:
     def __init__(self):
@@ -52,3 +54,17 @@ class AuthUtils:
     def connect_signals(cls):
         m2m_changed.connect(m2m_changed_user_groups, sender=User.groups.through)
         pre_save.connect(pre_save_user, sender=User)
+
+    @classmethod
+    def add_main_character(cls, user, name, character_id, corp_id='', corp_name='', alliance_id='', alliance_name=''):
+        EveCharacter.objects.create(
+            character_id=character_id,
+            character_name=name,
+            corporation_id=corp_id,
+            corporation_name=corp_name,
+            alliance_id=alliance_id,
+            alliance_name=alliance_name,
+            api_id='1234',
+            user=user
+        )
+        AuthServicesInfo.objects.update_or_create(user=user, defaults={'main_char_id': character_id})
