@@ -56,12 +56,14 @@ class AuthUtils:
         pre_save.connect(pre_save_user, sender=User)
 
     @classmethod
-    def add_main_character(cls, user, name, character_id, corp_id='', corp_name='', alliance_id='', alliance_name=''):
+    def add_main_character(cls, user, name, character_id, corp_id='', corp_name='', corp_ticker='', alliance_id='',
+                           alliance_name=''):
         EveCharacter.objects.create(
             character_id=character_id,
             character_name=name,
             corporation_id=corp_id,
             corporation_name=corp_name,
+            corporation_ticker=corp_ticker,
             alliance_id=alliance_id,
             alliance_name=alliance_name,
             api_id='1234',
