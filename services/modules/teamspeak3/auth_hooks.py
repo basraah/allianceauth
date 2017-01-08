@@ -23,7 +23,7 @@ class Teamspeak3Service(ServicesHook):
 
     def delete_user(self, user, notify_user=False):
         logger.debug('Deleting user %s %s account' % (user, self.name))
-        Teamspeak3Tasks.delete_user(user, notify_user=notify_user)
+        return Teamspeak3Tasks.delete_user(user, notify_user=notify_user)
 
     def update_groups(self, user):
         logger.debug('Updating %s groups for %s' % (self.name, user))
