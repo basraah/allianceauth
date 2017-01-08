@@ -27,7 +27,7 @@ class Phpbb3Service(ServicesHook):
 
     def delete_user(self, user, notify_user=False):
         logger.debug('Deleting user %s %s account' % (user, self.name))
-        Phpbb3Tasks.delete_user(user, notify_user=notify_user)
+        return Phpbb3Tasks.delete_user(user, notify_user=notify_user)
 
     def validate_user(self, user):
         logger.debug('Validating user %s %s account' % (user, self.name))
