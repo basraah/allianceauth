@@ -50,8 +50,8 @@ class SmfHooksTestCase(TestCase):
         self.assertTrue(service.service_enabled_members())
         self.assertTrue(service.service_enabled_blues())
 
-        self.assertEqual(service.service_active_for_user(member), settings.ENABLE_AUTH_JABBER)
-        self.assertEqual(service.service_active_for_user(blue), settings.ENABLE_BLUE_JABBER)
+        self.assertEqual(service.service_active_for_user(member), settings.ENABLE_AUTH_SMF)
+        self.assertEqual(service.service_active_for_user(blue), settings.ENABLE_BLUE_SMF)
         self.assertFalse(service.service_active_for_user(none_user))
 
     @mock.patch(MODULE_PATH + '.tasks.SmfManager')
