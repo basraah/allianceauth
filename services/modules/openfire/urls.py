@@ -13,7 +13,7 @@ module_urls = [
 ]
 
 module_i18n_urls = [
-    url(_(r'^set_password/$'), views.set_jabber_password, name='auth_set_jabber_password'),
+    url(_(r'^set_password/$'), views.set_jabber_password, name='auth_set_openfire_password'),
 ]
 
 urlpatterns = [
@@ -24,5 +24,5 @@ urlpatterns += i18n_patterns(
     # Jabber Broadcast
     url(_(r'^services/jabber_broadcast/$'), views.jabber_broadcast_view, name='auth_jabber_broadcast_view'),
     # Jabber
-    url(r'openfire/', include(module_i18n_urls, namespace='openfire'))
+    url(r'openfire/', include(module_i18n_urls))
 )
