@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from notifications import notify
 
-from .manager import smfManager
+from .manager import SmfManager
 from .models import SmfUser
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class SmfTasks:
     def delete_user(cls, user, notify_user=False):
         if cls.has_account(user):
             logger.debug("User %s has a SMF account %s. Deleting." % (user, user.smf.username))
-            smfManager.disable_user(user.smf.username)
+            SmfManager.disable_user(user.smf.username)
             user.smf.delete()
             if notify_user:
                 notify(user, "SMF Account Disabled", level='danger')
@@ -59,7 +59,7 @@ class SmfTasks:
                 groups.append('empty')
             logger.debug("Updating user %s smf groups to %s" % (user, groups))
             try:
-                smfManager.update_groups(user.smf.username, groups)
+                SmfManager.update_groups(user.smf.username, groups)
             except:
                 logger.exception("smf group sync failed for %s, retrying in 10 mins" % user)
                 raise self.retry(countdown=60 * 10)

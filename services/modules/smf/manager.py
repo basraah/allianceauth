@@ -12,7 +12,7 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-class smfManager:
+class SmfManager:
     def __init__(self):
         pass
 
@@ -67,28 +67,28 @@ class smfManager:
         unixtime = calendar.timegm(d.utctimetuple())
         return unixtime
 
-    @staticmethod
-    def create_group(groupname):
+    @classmethod
+    def create_group(cls, groupname):
         logger.debug("Creating smf group %s" % groupname)
         cursor = connections['smf'].cursor()
-        cursor.execute(smfManager.SQL_ADD_GROUP, [groupname, groupname])
+        cursor.execute(cls.SQL_ADD_GROUP, [groupname, groupname])
         logger.info("Created smf group %s" % groupname)
-        return smfManager.get_group_id(groupname)
+        return cls.get_group_id(groupname)
 
-    @staticmethod
-    def get_group_id(groupname):
+    @classmethod
+    def get_group_id(cls, groupname):
         logger.debug("Getting smf group id for groupname %s" % groupname)
         cursor = connections['smf'].cursor()
-        cursor.execute(smfManager.SQL_GET_GROUP_ID, [groupname])
+        cursor.execute(cls.SQL_GET_GROUP_ID, [groupname])
         row = cursor.fetchone()
         logger.debug("Got smf group id %s for groupname %s" % (row[0], groupname))
         return row[0]
 
-    @staticmethod
-    def check_user(username):
+    @classmethod
+    def check_user(cls, username):
         logger.debug("Checking smf username %s" % username)
         cursor = connections['smf'].cursor()
-        cursor.execute(smfManager.SQL_USER_ID_FROM_USERNAME, [smfManager.santatize_username(username)])
+        cursor.execute(cls.SQL_USER_ID_FROM_USERNAME, [cls.santatize_username(username)])
         row = cursor.fetchone()
         if row:
             logger.debug("Found user %s on smf" % username)
@@ -96,19 +96,19 @@ class smfManager:
         logger.debug("User %s not found on smf" % username)
         return False
 
-    @staticmethod
-    def add_avatar(member_name, characterid):
+    @classmethod
+    def add_avatar(cls, member_name, characterid):
         logger.debug("Adding EVE character id %s portrait as smf avatar for user %s" % (characterid, member_name))
         avatar_url = "https://image.eveonline.com/Character/" + characterid + "_64.jpg"
         cursor = connections['smf'].cursor()
-        id_member = smfManager.get_user_id(member_name)
-        cursor.execute(smfManager.SQL_ADD_USER_AVATAR, [avatar_url, id_member])
+        id_member = cls.get_user_id(member_name)
+        cursor.execute(cls.SQL_ADD_USER_AVATAR, [avatar_url, id_member])
 
-    @staticmethod
-    def get_user_id(username):
+    @classmethod
+    def get_user_id(cls, username):
         logger.debug("Getting smf user id for username %s" % username)
         cursor = connections['smf'].cursor()
-        cursor.execute(smfManager.SQL_USER_ID_FROM_USERNAME, [username])
+        cursor.execute(cls.SQL_USER_ID_FROM_USERNAME, [username])
         row = cursor.fetchone()
         if row is not None:
             logger.debug("Got smf user id %s for username %s" % (row[0], username))
@@ -117,11 +117,11 @@ class smfManager:
             logger.error("username %s not found on smf. Unable to determine user id ." % username)
             return None
 
-    @staticmethod
-    def get_all_groups():
+    @classmethod
+    def get_all_groups(cls):
         logger.debug("Getting all smf groups.")
         cursor = connections['smf'].cursor()
-        cursor.execute(smfManager.SQL_GET_ALL_GROUPS)
+        cursor.execute(cls.SQL_GET_ALL_GROUPS)
         rows = cursor.fetchall()
         out = {}
         for row in rows:
@@ -129,137 +129,137 @@ class smfManager:
         logger.debug("Got smf groups %s" % out)
         return out
 
-    @staticmethod
-    def get_user_groups(userid):
+    @classmethod
+    def get_user_groups(cls, userid):
         logger.debug("Getting smf user id %s groups" % userid)
         cursor = connections['smf'].cursor()
-        cursor.execute(smfManager.SQL_GET_USER_GROUPS, [userid])
+        cursor.execute(cls.SQL_GET_USER_GROUPS, [userid])
         out = [row[0] for row in cursor.fetchall()]
         logger.debug("Got user %s smf groups %s" % (userid, out))
         return out
 
-    @staticmethod
-    def add_user(username, email_address, groups, characterid):
+    @classmethod
+    def add_user(cls, username, email_address, groups, characterid):
         logger.debug("Adding smf user with member_name %s, email_address %s, characterid %s" % (
             username, email_address, characterid))
         cursor = connections['smf'].cursor()
-        username_clean = smfManager.santatize_username(username)
-        passwd = smfManager.generate_random_pass()
-        pwhash = smfManager.gen_hash(username_clean, passwd)
+        username_clean = cls.santatize_username(username)
+        passwd = cls.generate_random_pass()
+        pwhash = cls.gen_hash(username_clean, passwd)
         logger.debug("Proceeding to add smf user %s and pwhash starting with %s" % (username, pwhash[0:5]))
-        register_date = smfManager.get_current_utc_date()
+        register_date = cls.get_current_utc_date()
         # check if the username was simply revoked
-        if smfManager.check_user(username) is True:
+        if cls.check_user(username) is True:
             logger.warn("Unable to add smf user with username %s - already exists. Updating user instead." % username)
-            smfManager.__update_user_info(username_clean, email_address, pwhash)
+            cls.__update_user_info(username_clean, email_address, pwhash)
         else:
             try:
-                cursor.execute(smfManager.SQL_ADD_USER,
+                cursor.execute(cls.SQL_ADD_USER,
                                [username_clean, passwd, email_address, register_date, username_clean])
-                smfManager.add_avatar(username_clean, characterid)
+                cls.add_avatar(username_clean, characterid)
                 logger.info("Added smf member_name %s" % username_clean)
-                smfManager.update_groups(username_clean, groups)
+                cls.update_groups(username_clean, groups)
             except:
                 logger.warn("Unable to add smf user %s" % username_clean)
                 pass
         return username_clean, passwd
 
-    @staticmethod
-    def __update_user_info(username, email_address, passwd):
+    @classmethod
+    def __update_user_info(cls, username, email_address, passwd):
         logger.debug(
             "Updating smf user %s info: username %s password of length %s" % (username, email_address, len(passwd)))
         cursor = connections['smf'].cursor()
         try:
-            cursor.execute(smfManager.SQL_DIS_USER, [email_address, passwd, username])
+            cursor.execute(cls.SQL_DIS_USER, [email_address, passwd, username])
             logger.info("Updated smf user %s info" % username)
         except:
             logger.exception("Unable to update smf user %s info." % username)
             pass
 
-    @staticmethod
-    def delete_user(username):
+    @classmethod
+    def delete_user(cls, username):
         logger.debug("Deleting smf user %s" % username)
         cursor = connections['smf'].cursor()
 
-        if smfManager.check_user(username):
-            cursor.execute(smfManager.SQL_DEL_USER, [username])
+        if cls.check_user(username):
+            cursor.execute(cls.SQL_DEL_USER, [username])
             logger.info("Deleted smf user %s" % username)
             return True
         logger.error("Unable to delete smf user %s - user not found on smf." % username)
         return False
 
-    @staticmethod
-    def update_groups(username, groups):
-        userid = smfManager.get_user_id(username)
+    @classmethod
+    def update_groups(cls, username, groups):
+        userid = cls.get_user_id(username)
         logger.debug("Updating smf user %s with id %s groups %s" % (username, userid, groups))
         if userid is not None:
-            forum_groups = smfManager.get_all_groups()
-            user_groups = set(smfManager.get_user_groups(userid))
-            act_groups = set([smfManager._sanitize_groupname(g) for g in groups])
+            forum_groups = cls.get_all_groups()
+            user_groups = set(cls.get_user_groups(userid))
+            act_groups = set([cls._sanitize_groupname(g) for g in groups])
             addgroups = act_groups - user_groups
             remgroups = user_groups - act_groups
             logger.info("Updating smf user %s groups - adding %s, removing %s" % (username, addgroups, remgroups))
             act_group_id = set()
             for g in addgroups:
                 if g not in forum_groups:
-                    forum_groups[g] = smfManager.create_group(g)
-                act_group_id.add(str(smfManager.get_group_id(g)))
+                    forum_groups[g] = cls.create_group(g)
+                act_group_id.add(str(cls.get_group_id(g)))
             string_groups = ','.join(act_group_id)
-            smfManager.add_user_to_group(userid, string_groups)
+            cls.add_user_to_group(userid, string_groups)
 
-    @staticmethod
-    def add_user_to_group(userid, groupid):
+    @classmethod
+    def add_user_to_group(cls, userid, groupid):
         logger.debug("Adding smf user id %s to group id %s" % (userid, groupid))
         try:
             cursor = connections['smf'].cursor()
-            cursor.execute(smfManager.SQL_ADD_USER_GROUP, [groupid, userid])
+            cursor.execute(cls.SQL_ADD_USER_GROUP, [groupid, userid])
             logger.info("Added smf user id %s to group id %s" % (userid, groupid))
         except:
             logger.exception("Unable to add smf user id %s to group id %s" % (userid, groupid))
             pass
 
-    @staticmethod
-    def remove_user_from_group(userid, groupid):
+    @classmethod
+    def remove_user_from_group(cls, userid, groupid):
         logger.debug("Removing smf user id %s from group id %s" % (userid, groupid))
         try:
             cursor = connections['smf'].cursor()
-            cursor.execute(smfManager.SQL_REMOVE_USER_GROUP, [groupid, userid])
+            cursor.execute(cls.SQL_REMOVE_USER_GROUP, [groupid, userid])
             logger.info("Removed smf user id %s from group id %s" % (userid, groupid))
         except:
             logger.exception("Unable to remove smf user id %s from group id %s" % (userid, groupid))
             pass
 
-    @staticmethod
-    def disable_user(username):
+    @classmethod
+    def disable_user(cls, username):
         logger.debug("Disabling smf user %s" % username)
         cursor = connections['smf'].cursor()
 
-        password = smfManager.generate_random_pass()
+        password = cls.generate_random_pass()
         revoke_email = "revoked@" + settings.DOMAIN
         try:
-            pwhash = smfManager.gen_hash(username, password)
-            cursor.execute(smfManager.SQL_DIS_USER, [revoke_email, pwhash, username])
-            smfManager.get_user_id(username)
-            smfManager.update_groups(username, [])
+            pwhash = cls.gen_hash(username, password)
+            cursor.execute(cls.SQL_DIS_USER, [revoke_email, pwhash, username])
+            cls.get_user_id(username)
+            cls.update_groups(username, [])
             logger.info("Disabled smf user %s" % username)
             return True
         except TypeError:
             logger.exception("TypeError occured while disabling user %s - failed to disable." % username)
             return False
 
-    @staticmethod
-    def update_user_password(username, characterid, password=None):
+    @classmethod
+    def update_user_password(cls, username, characterid, password=None):
         logger.debug("Updating smf user %s password" % username)
         cursor = connections['smf'].cursor()
         if not password:
-            password = smfManager.generate_random_pass()
-        if smfManager.check_user(username):
-            username_clean = smfManager.santatize_username(username)
-            pwhash = smfManager.gen_hash(username_clean, password)
+            password = cls.generate_random_pass()
+        if cls.check_user(username):
+            username_clean = cls.santatize_username(username)
+            pwhash = cls.gen_hash(username_clean, password)
             logger.debug(
                 "Proceeding to update smf user %s password with pwhash starting with %s" % (username, pwhash[0:5]))
-            cursor.execute(smfManager.SQL_UPDATE_USER_PASSWORD, [pwhash, username])
-            smfManager.add_avatar(username, characterid)
+            cursor.execute(cls.SQL_UPDATE_USER_PASSWORD, [pwhash, username])
+            cls.add_avatar(username, characterid)
             logger.info("Updated smf user %s password." % username)
             return password
         logger.error("Unable to update smf user %s password - user not found on smf." % username)

@@ -8,7 +8,7 @@ from authentication.decorators import members_and_blues
 from eveonline.managers import EveManager
 from services.forms import ServicePasswordForm
 
-from .manager import smfManager
+from .manager import SmfManager
 from .tasks import SmfTasks
 from .models import SmfUser
 
@@ -24,7 +24,7 @@ def activate_smf(request):
     # Valid now we get the main characters
     character = EveManager.get_main_character(request.user)
     logger.debug("Adding smf user for user %s with main character %s" % (request.user, character))
-    result = smfManager.add_user(character.character_name, request.user.email, ['Member'], character.character_id)
+    result = SmfManager.add_user(character.character_name, request.user.email, ['Member'], character.character_id)
     # if empty we failed
     if result[0] != "":
         SmfUser.objects.update_or_create(user=request.user, defaults={'username': result[0]})
@@ -65,7 +65,7 @@ def reset_smf_password(request):
     logger.debug("reset_smf_password called by user %s" % request.user)
     character = EveManager.get_main_character(request.user)
     if SmfTasks.has_account(request.user) and character is not None:
-        result = smfManager.update_user_password(request.user.smf.username, character.character_id)
+        result = SmfManager.update_user_password(request.user.smf.username, character.character_id)
         # false we failed
         if result != "":
             logger.info("Successfully reset smf password for user %s" % request.user)
@@ -93,7 +93,7 @@ def set_smf_password(request):
         if form.is_valid() and SmfTasks.has_account(request.user) and character is not None:
             password = form.cleaned_data['password']
             logger.debug("Form contains password of length %s" % len(password))
-            result = smfManager.update_user_password(request.user.smf.username, character.character_id,
+            result = SmfManager.update_user_password(request.user.smf.username, character.character_id,
                                                      password=password)
             if result != "":
                 logger.info("Successfully set smf password for user %s" % request.user)
