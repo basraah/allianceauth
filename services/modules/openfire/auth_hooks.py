@@ -27,7 +27,7 @@ class OpenfireService(ServicesHook):
 
     def delete_user(self, user, notify_user=False):
         logger.debug('Deleting user %s %s account' % (user, self.name))
-        OpenfireTasks.delete_user(user, notify_user=notify_user)
+        return OpenfireTasks.delete_user(user, notify_user=notify_user)
 
     def validate_user(self, user):
         logger.debug('Validating user %s %s account' % (user, self.name))
@@ -60,6 +60,7 @@ class OpenfireService(ServicesHook):
         urls = self.Urls()
         urls.auth_activate = 'auth_activate_openfire'
         urls.auth_deactivate = 'auth_deactivate_openfire'
+        urls.auth_set_password = 'auth_set_openfire_password'
         urls.auth_reset_password = 'auth_reset_openfire_password'
         return render_to_string(self.service_ctrl_template, {
             'service_name': self.title,
