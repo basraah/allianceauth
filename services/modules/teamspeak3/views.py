@@ -109,10 +109,10 @@ def reset_teamspeak3_perm(request):
                                                               character.corporation_ticker)
 
     # if blank we failed
-    if result != "":
+    if result[0] != "":
         Teamspeak3User.objects.update_or_create(user=request.user, defaults={'uid': result[0], 'perm_key': result[1]})
         logger.debug("Updated authserviceinfo for user %s with TS3 credentials. Updating groups." % request.user)
-        Teamspeak3Tasks.update_groups.delay(request.user)
+        Teamspeak3Tasks.update_groups.delay(request.user.pk)
         logger.info("Successfully reset TS3 permission key for user %s" % request.user)
         messages.success(request, 'Reset TeamSpeak3 permission key.')
     else:
