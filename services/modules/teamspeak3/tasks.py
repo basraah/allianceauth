@@ -92,5 +92,5 @@ class Teamspeak3Tasks:
     @app.task
     def update_all_groups():
         logger.debug("Updating ALL teamspeak3 groups")
-        for user in AuthServicesInfo.objects.exclude(teamspeak3_uid__exact=''):
+        for user in Teamspeak3User.objects.exclude(uid__exact=''):
             Teamspeak3Tasks.update_groups.delay(user.user_id)
