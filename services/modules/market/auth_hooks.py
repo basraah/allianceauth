@@ -29,16 +29,10 @@ class MarketService(ServicesHook):
         logger.debug('Deleting user %s %s account' % (user, self.name))
         return MarketTasks.delete_user(user, notify_user=notify_user)
 
-    def update_groups(self, user):
-        pass
-
     def validate_user(self, user):
         logger.debug('Validating user %s %s account' % (user, self.name))
         if MarketTasks.has_account(user) and self.service_active_for_user(user):
             self.delete_user(user)
-
-    def update_all_groups(self):
-        pass
 
     def service_enabled_members(self):
         return settings.ENABLE_AUTH_MARKET or False
