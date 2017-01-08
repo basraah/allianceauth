@@ -26,18 +26,12 @@ class XenforoService(ServicesHook):
 
     def delete_user(self, user, notify_user=False):
         logger.debug('Deleting user %s %s account' % (user, self.name))
-        XenforoTasks.delete_user(user, notify_user=notify_user)
+        return XenforoTasks.delete_user(user, notify_user=notify_user)
 
     def validate_user(self, user):
         logger.debug('Validating user %s %s account' % (user, self.name))
         if XenforoTasks.has_account(user) and not self.service_active_for_user(user):
             self.delete_user(user, notify_user=True)
-
-    def update_groups(self, user):
-        pass
-
-    def update_all_groups(self):
-        pass
 
     def service_enabled_members(self):
         return settings.ENABLE_AUTH_XENFORO or False
