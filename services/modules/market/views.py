@@ -8,7 +8,7 @@ from authentication.decorators import members_and_blues
 from services.forms import ServicePasswordForm
 from eveonline.managers import EveManager
 
-from .manager import marketManager
+from .manager import MarketManager
 from .models import MarketUser
 from .tasks import MarketTasks
 
@@ -24,7 +24,7 @@ def activate_market(request):
     character = EveManager.get_main_character(request.user)
     if character is not None:
         logger.debug("Adding market user for user %s with main character %s" % (request.user, character))
-        result = marketManager.add_user(character.character_name, request.user.email, character.character_id,
+        result = MarketManager.add_user(character.character_name, request.user.email, character.character_id,
                                         character.character_name)
         # if empty we failed
         if result[0] != "":
@@ -62,7 +62,7 @@ def deactivate_market(request):
 def reset_market_password(request):
     logger.debug("reset_market_password called by user %s" % request.user)
     if MarketTasks.has_account(request.user):
-        result = marketManager.update_user_password(request.user.market.username)
+        result = MarketManager.update_user_password(request.user.market.username)
         # false we failed
         if result != "":
             logger.info("Successfully reset market password for user %s" % request.user)
@@ -90,7 +90,7 @@ def set_market_password(request):
         if form.is_valid() and MarketTasks.has_account(request.user):
             password = form.cleaned_data['password']
             logger.debug("Form contains password of length %s" % len(password))
-            result = marketManager.update_custom_password(request.user.market.username, password)
+            result = MarketManager.update_custom_password(request.user.market.username, password)
             if result != "":
                 logger.info("Successfully reset market password for user %s" % request.user)
                 messages.success(request, 'Set Alliance Market password.')

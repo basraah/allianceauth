@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from notifications import notify
 
 from .models import MarketUser
-from .manager import marketManager as MarketManager
+from .manager import MarketManager
 
 
 import logging
