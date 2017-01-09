@@ -12,6 +12,14 @@ import alliance_auth
 
 djcelery.setup_loader()
 
+# Use nose to run all tests
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+
+NOSE_ARGS = [
+    #'--with-coverage',
+    #'--cover-package=',
+]
+
 # Celery configuration
 CELERY_ALWAYS_EAGER = True  # Forces celery to run locally for testing
 
@@ -58,6 +66,7 @@ INSTALLED_APPS = [
     'services.modules.phpbb3',
     'services.modules.xenforo',
     'services.modules.teamspeak3',
+    'django_nose',
 ]
 
 MIDDLEWARE = [
@@ -438,10 +447,11 @@ DISCORD_SYNC_NAMES = 'True' == os.environ.get('AA_DISCORD_SYNC_NAMES', 'False')
 # DISCOURSE_API_KEY - API Key
 # DISCOURSE_SSO_SECRET - SSO secret key
 ######################################
-DISCOURSE_URL = os.environ.get('AA_DISCOURSE_URL', '')
+DISCOURSE_URL = os.environ.get('AA_DISCOURSE_URL', 'https://example.com')
 DISCOURSE_API_USERNAME = os.environ.get('AA_DISCOURSE_API_USERNAME', '')
 DISCOURSE_API_KEY = os.environ.get('AA_DISCOURSE_API_KEY', '')
-DISCOURSE_SSO_SECRET = os.environ.get('AA_DISCOURSE_SSO_SECRET', '')
+DISCOURSE_SSO_SECRET = 'd836444a9e4084d5b224a60c208dce14'
+# Example secret from https://meta.discourse.org/t/official-single-sign-on-for-discourse/13045
 
 #####################################
 # IPS4 Configuration
