@@ -12,36 +12,40 @@ from django.conf import settings
 from django import urls
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import signals
 
 from alliance_auth.tests.auth_utils import AuthUtils
 
 from .auth_hooks import Teamspeak3Service
 from .models import Teamspeak3User, AuthTS, TSgroup
 from .tasks import Teamspeak3Tasks
+from .signals import m2m_changed_authts_group, post_save_authts, post_delete_authts
 
 MODULE_PATH = 'services.modules.teamspeak3'
 
 
 class Teamspeak3HooksTestCase(TestCase):
     def setUp(self):
-        self.member = 'member_user'
-        member = AuthUtils.create_member(self.member)
-        Teamspeak3User.objects.create(user=member, uid=self.member, perm_key='123ABC')
-        self.blue = 'blue_user'
-        blue = AuthUtils.create_blue(self.blue)
-        Teamspeak3User.objects.create(user=blue, uid=self.blue, perm_key='456DEF')
-        self.none_user = 'none_user'
-        none_user = AuthUtils.create_user(self.none_user)
+        # Inert signals before setup begins
+        with mock.patch(MODULE_PATH + '.signals.trigger_all_ts_update') as trigger_all_ts_update:
+            self.member = 'member_user'
+            member = AuthUtils.create_member(self.member)
+            Teamspeak3User.objects.create(user=member, uid=self.member, perm_key='123ABC')
+            self.blue = 'blue_user'
+            blue = AuthUtils.create_blue(self.blue)
+            Teamspeak3User.objects.create(user=blue, uid=self.blue, perm_key='456DEF')
+            self.none_user = 'none_user'
+            none_user = AuthUtils.create_user(self.none_user)
 
-        ts_member_group = TSgroup.objects.create(ts_group_id=1, ts_group_name='Member')
-        ts_blue_group = TSgroup.objects.create(ts_group_id=2, ts_group_name='Blue')
-        m2m_member_group = AuthTS.objects.create(auth_group=member.groups.all()[0])
-        m2m_member_group.ts_group.add(ts_member_group)
-        m2m_member_group.save()
-        m2m_blue_group = AuthTS.objects.create(auth_group=blue.groups.all()[0])
-        m2m_blue_group.ts_group.add(ts_blue_group)
-        m2m_blue_group.save()
-        self.service = Teamspeak3Service
+            ts_member_group = TSgroup.objects.create(ts_group_id=1, ts_group_name='Member')
+            ts_blue_group = TSgroup.objects.create(ts_group_id=2, ts_group_name='Blue')
+            m2m_member_group = AuthTS.objects.create(auth_group=member.groups.all()[0])
+            m2m_member_group.ts_group.add(ts_member_group)
+            m2m_member_group.save()
+            m2m_blue_group = AuthTS.objects.create(auth_group=blue.groups.all()[0])
+            m2m_blue_group.ts_group.add(ts_blue_group)
+            m2m_blue_group.save()
+            self.service = Teamspeak3Service
 
     def test_has_account(self):
         member = User.objects.get(username=self.member)
@@ -139,25 +143,27 @@ class Teamspeak3HooksTestCase(TestCase):
 
 class Teamspeak3ViewsTestCase(TestCase):
     def setUp(self):
-        self.member = AuthUtils.create_member('auth_member')
-        self.member.set_password('password')
-        self.member.email = 'auth_member@example.com'
-        self.member.save()
-        AuthUtils.add_main_character(self.member, 'auth_member', '12345', corp_id='111', corp_name='Test Corporation')
-        self.blue_user = AuthUtils.create_blue('auth_blue')
-        self.blue_user.set_password('password')
-        self.blue_user.email = 'auth_blue@example.com'
-        self.blue_user.save()
-        AuthUtils.add_main_character(self.blue_user, 'auth_blue', '92345', corp_id='111', corp_name='Test Corporation')
+        # Inert signals before setup begins
+        with mock.patch(MODULE_PATH + '.signals.trigger_all_ts_update') as trigger_all_ts_update:
+            self.member = AuthUtils.create_member('auth_member')
+            self.member.set_password('password')
+            self.member.email = 'auth_member@example.com'
+            self.member.save()
+            AuthUtils.add_main_character(self.member, 'auth_member', '12345', corp_id='111', corp_name='Test Corporation')
+            self.blue_user = AuthUtils.create_blue('auth_blue')
+            self.blue_user.set_password('password')
+            self.blue_user.email = 'auth_blue@example.com'
+            self.blue_user.save()
+            AuthUtils.add_main_character(self.blue_user, 'auth_blue', '92345', corp_id='111', corp_name='Test Corporation')
 
-        ts_member_group = TSgroup.objects.create(ts_group_id=1, ts_group_name='Member')
-        ts_blue_group = TSgroup.objects.create(ts_group_id=2, ts_group_name='Blue')
-        m2m_member = AuthTS.objects.create(auth_group=Group.objects.get(name='Member'))
-        m2m_member.ts_group.add(ts_member_group)
-        m2m_member.save()
-        m2m_blue = AuthTS.objects.create(auth_group=Group.objects.get(name='Blue'))
-        m2m_blue.ts_group.add(ts_blue_group)
-        m2m_blue.save()
+            ts_member_group = TSgroup.objects.create(ts_group_id=1, ts_group_name='Member')
+            ts_blue_group = TSgroup.objects.create(ts_group_id=2, ts_group_name='Blue')
+            m2m_member = AuthTS.objects.create(auth_group=Group.objects.get(name='Member'))
+            m2m_member.ts_group.add(ts_member_group)
+            m2m_member.save()
+            m2m_blue = AuthTS.objects.create(auth_group=Group.objects.get(name='Blue'))
+            m2m_blue.ts_group.add(ts_blue_group)
+            m2m_blue.save()
 
     def login(self, user=None, password=None):
         if user is None:
@@ -253,3 +259,70 @@ class Teamspeak3ViewsTestCase(TestCase):
         self.assertEqual(ts3_user.uid, 'valid_blue')
         self.assertEqual(ts3_user.perm_key, '123abc')
         self.assertTrue(tasks_manager.update_groups.called)
+
+
+class Teamspeak3SignalsTestCase(TestCase):
+    def setUp(self):
+        self.member = AuthUtils.create_member('auth_member')
+
+        # Suppress signals action while setting up
+        with mock.patch(MODULE_PATH + '.signals.trigger_all_ts_update') as trigger_all_ts_update:
+            ts_member_group = TSgroup.objects.create(ts_group_id=1, ts_group_name='Member')
+            self.m2m_member = AuthTS.objects.create(auth_group=Group.objects.get(name='Member'))
+            self.m2m_member.ts_group.add(ts_member_group)
+            self.m2m_member.save()
+
+    def test_m2m_signal_registry(self):
+        """
+        Test that the m2m signal has been registered
+        """
+        registered_functions = [r[1]() for r in signals.m2m_changed.receivers]
+        self.assertIn(m2m_changed_authts_group, registered_functions)
+
+    def test_post_save_signal_registry(self):
+        """
+        Test that the post_save signal has been registered
+        """
+        registered_functions = [r[1]() for r in signals.post_save.receivers]
+        self.assertIn(post_save_authts, registered_functions)
+
+    def test_post_delete_signal_registry(self):
+        """
+        Test that the post_delete signal has been registered
+        """
+        registered_functions = [r[1]() for r in signals.post_delete.receivers]
+        self.assertIn(post_delete_authts, registered_functions)
+
+    @mock.patch(MODULE_PATH + '.signals.transaction')
+    @mock.patch(MODULE_PATH + '.signals.trigger_all_ts_update')
+    def test_m2m_changed_authts_group(self, trigger_all_ts_update, transaction):
+
+        # Overload transaction.on_commit so everything happens synchronously
+        transaction.on_commit = lambda fn: fn()
+
+        new_group = TSgroup.objects.create(ts_group_id=99, ts_group_name='new TS group')
+        self.m2m_member.ts_group.add(new_group)
+        self.m2m_member.save()  # Triggers signal
+
+        self.assertTrue(trigger_all_ts_update.called)
+
+    @mock.patch(MODULE_PATH + '.signals.transaction')
+    @mock.patch(MODULE_PATH + '.signals.trigger_all_ts_update')
+    def test_post_save_authts(self, trigger_all_ts_update, transaction):
+
+        # Overload transaction.on_commit so everything happens synchronously
+        transaction.on_commit = lambda fn: fn()
+
+        AuthTS.objects.create(auth_group=Group.objects.create(name='Test Group'))  # Trigger signal (AuthTS creation)
+
+        self.assertTrue(trigger_all_ts_update.called)
+
+    @mock.patch(MODULE_PATH + '.signals.transaction')
+    @mock.patch(MODULE_PATH + '.signals.trigger_all_ts_update')
+    def test_post_delete_authts(self, trigger_all_ts_update, transaction):
+        # Overload transaction.on_commit so everything happens synchronously
+        transaction.on_commit = lambda fn: fn()
+
+        self.m2m_member.delete()  # Trigger delete signal
+
+        self.assertTrue(trigger_all_ts_update.called)
