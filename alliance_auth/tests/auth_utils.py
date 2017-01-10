@@ -28,6 +28,7 @@ class AuthUtils:
         AuthServicesInfo.objects.get_or_create(user=user, defaults={'state': NONE_STATE})
         if disconnect_signals:
             cls.connect_signals()
+        return user
 
     @classmethod
     def create_member(cls, username):
