@@ -61,7 +61,6 @@ class DiscordTasks:
 
     @staticmethod
     @app.task(bind=True)
-    @only_one(key="Discord", timeout=60 * 5)
     def update_groups(task_self, pk):
         user = User.objects.get(pk=pk)
         logger.debug("Updating discord groups for user %s" % user)
