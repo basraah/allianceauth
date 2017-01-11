@@ -131,9 +131,5 @@ class DiscourseViewsTestCase(TestCase):
         data = {'sso': 'bm9uY2U9Y2I2ODI1MWVlZmI1MjExZTU4YzAwZmYxMzk1ZjBjMGI%3D%0A',
                 'sig': '2828aa29899722b35a2f191d34ef9b3ce695e0e6eeec47deb46d588d70c7cb56'}
         response = self.client.get('/discourse/sso', data=data, follow=False)
-        expected_redirect = 'https://example.com/session/sso_login?sso=' \
-                            'bm9uY2U9Y2I2ODI1MWVlZmI1MjExZTU4YzAwZmYxMzk1ZjBjMGImdXNlcm5hbWU9YXV0aF9tZW1i%0AZXI' \
-                            'mbmFtZT1hdXRoX21lbWJlciZhdmF0YXJfdXJsPWh0dHBzJTNBJTJGJTJGaW1hZ2UuZXZlb25s%0AaW5lLm' \
-                            'NvbSUyRkNoYXJhY3RlciUyRjEyMzQ1XzI1Ni5qcGcmZXh0ZXJuYWxfaWQ9MSZlbWFpbD0%3D%0A&sig=ee' \
-                            'ecc2ecd19506d6202af7ad1b9ff2d82497abad341d28c4f659dbd6422bc34d'
-        self.assertRedirects(response, expected_url=expected_redirect, target_status_code=404)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url[:37], 'https://example.com/session/sso_login')
