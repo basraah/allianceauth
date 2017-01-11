@@ -193,3 +193,20 @@ class SmfViewsTestCase(TestCase):
         self.assertTemplateUsed(response, 'registered/service_credentials.html')
         self.assertContains(response, 'some member')
         self.assertContains(response, 'hunter2')
+
+
+class SmfManagerTestCase(TestCase):
+    def setUp(self):
+        from .manager import SmfManager
+        self.manager = SmfManager
+
+    def test_generate_random_password(self):
+        password = self.manager.generate_random_pass()
+
+        self.assertEqual(len(password), 16)
+        self.assertIsInstance(password, type(''))
+
+    def test_gen_hash(self):
+        pwhash = self.manager.gen_hash('username', 'test')
+
+        self.assertEqual(pwhash, 'b6d21d37de84db76746b1c45696a00f9ce4f86fd')

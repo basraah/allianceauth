@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 from django.utils import six
 import re
-import os
+import random
+import string
 try:
     from urlparse import urlparse
 except ImportError:
@@ -42,7 +43,7 @@ class OpenfireManager:
 
     @staticmethod
     def __generate_random_pass():
-        return os.urandom(8).encode('hex')
+        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(16)])
 
     @staticmethod
     def _sanitize_groupname(name):

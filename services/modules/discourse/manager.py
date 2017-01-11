@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 import logging
 import requests
-import os
+import random
+import string
 import datetime
 import json
 import re
@@ -11,10 +12,12 @@ from services.models import GroupCache
 
 logger = logging.getLogger(__name__)
 
+
 class DiscourseError(Exception):
     def __init__(self, endpoint, errors):
         self.endpoint = endpoint
         self.errors = errors
+
     def __str__(self):
         return "API execution failed.\nErrors: %s\nEndpoint: %s" % (self.errors, self.endpoint)
 
@@ -188,7 +191,7 @@ class DiscourseManager:
 
     @staticmethod
     def __generate_random_pass():
-        return os.urandom(8).encode('hex')
+        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(16)])
 
     @staticmethod
     def __get_groups():

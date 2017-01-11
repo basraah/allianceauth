@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
-import os
+import random
+import string
 import requests
 import json
 
@@ -25,7 +26,7 @@ class XenForoManager:
 
     @staticmethod
     def __generate_password():
-        return os.urandom(8).encode('hex')
+        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(16)])
 
     @staticmethod
     def exec_http_request(http_params):

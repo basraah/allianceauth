@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
-import os
+import random
+import string
 import re
 from hashlib import md5
 try:
@@ -27,7 +28,11 @@ class IPBoardManager:
 
     @staticmethod
     def __generate_random_pass():
-        return os.urandom(8).encode('hex')
+        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(16)])
+
+    @staticmethod
+    def _gen_pwhash(password):
+        return md5(password.encode('utf-8')).hexdigest()
 
     @staticmethod
     def _sanitize_groupname(name):
@@ -49,13 +54,13 @@ class IPBoardManager:
         except:
             return {}
 
-    @staticmethod
-    def add_user(username, email):
+    @classmethod
+    def add_user(cls, username, email):
         """ Add user to service """
         sanatized = str(IPBoardManager.__santatize_username(username))
         logger.debug("Adding user to IPBoard with username %s" % sanatized)
         plain_password = IPBoardManager.__generate_random_pass()
-        password = md5(plain_password).hexdigest()
+        password = cls._gen_pwhash(plain_password)
         IPBoardManager.exec_xmlrpc('createUser', username=sanatized, email=str(email), display_name=sanatized,
                                    md5_passwordHash=password)
         logger.info("Added IPBoard user with username %s" % sanatized)
@@ -75,10 +80,10 @@ class IPBoardManager:
         logger.info("Disabled IPBoard user with username %s" % username)
         return username
 
-    @staticmethod
-    def update_user(username, email, password):
+    @classmethod
+    def update_user(cls, username, email, password):
         """ Add user to service """
-        password = md5(password).hexdigest()
+        password = cls._gen_pwhash(password)
         logger.debug("Updating IPBoard username %s with email %s and password hash starting with %s" % (
             username, email, password[0:5]))
         IPBoardManager.exec_xmlrpc('updateUser', username=username, email=email, md5_passwordHash=password)

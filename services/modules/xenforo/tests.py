@@ -178,3 +178,15 @@ class XenforoViewsTestCase(TestCase):
         self.assertTemplateUsed(response, 'registered/service_credentials.html')
         self.assertContains(response, 'some member')
         self.assertContains(response, 'hunter2')
+
+
+class XenforoManagerTestCase(TestCase):
+    def setUp(self):
+        from .manager import XenForoManager
+        self.manager = XenForoManager
+
+    def test_generate_password(self):
+        password = self.manager._XenForoManager__generate_password()
+
+        self.assertEqual(len(password), 16)
+        self.assertIsInstance(password, type(''))

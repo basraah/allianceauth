@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
-import os
+import random
+import string
 import calendar
 from datetime import datetime
 import hashlib
@@ -49,11 +50,11 @@ class SmfManager:
 
     @staticmethod
     def generate_random_pass():
-        return os.urandom(8).encode('hex')
+        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(16)])
 
     @staticmethod
     def gen_hash(username_clean, passwd):
-        return hashlib.sha1(username_clean + passwd).hexdigest()
+        return hashlib.sha1((username_clean + passwd).encode('utf-8')).hexdigest()
 
     @staticmethod
     def santatize_username(username):

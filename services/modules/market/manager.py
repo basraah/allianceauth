@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 import logging
-import os
+import random
+import string
+import re
 
 from django.db import connections
 from passlib.hash import bcrypt
@@ -32,7 +34,17 @@ class MarketManager:
 
     @staticmethod
     def __generate_random_pass():
-        return os.urandom(8).encode('hex')
+        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(16)])
+
+    @staticmethod
+    def _gen_pwhash(password):
+        return bcrypt.encrypt(password.encode('utf-8'), rounds=13)
+
+    @staticmethod
+    def _get_salt(pw_hash):
+        search = re.compile(r"^\$2[a-z]?\$([0-9]+)\$(.{22})(.{31})$")
+        match = re.match(search, pw_hash)
+        return match.group(2)
 
     @classmethod
     def check_username(cls, username):
@@ -62,10 +74,8 @@ class MarketManager:
     def add_user(cls, username, email, characterid, charactername):
         logger.debug("Adding new market user %s" % username)
         plain_password = cls.__generate_random_pass()
-        hash = bcrypt.encrypt(plain_password, rounds=13)
-        hash_result = hash
-        rounds_striped = hash_result.strip('$2a$13$')
-        salt = rounds_striped[:22]
+        hash = cls._gen_pwhash(plain_password)
+        salt = cls._get_salt(hash)
         username_clean = cls.__santatize_username(username)
         if not cls.check_username(username):
             if not cls.check_user_email(username, email):
@@ -99,10 +109,8 @@ class MarketManager:
         logger.debug("Updating alliance market user %s password" % username)
         if cls.check_username(username):
             username_clean = cls.__santatize_username(username)
-            hash = bcrypt.encrypt(plain_password, rounds=13)
-            hash_result = hash
-            rounds_striped = hash_result.strip('$2a$13$')
-            salt = rounds_striped[:22]
+            hash = cls._gen_pwhash(plain_password)
+            salt = cls._get_salt(hash)
             cursor = connections['market'].cursor()
             cursor.execute(cls.SQL_UPDATE_PASSWORD, [hash, salt, username_clean])
             return plain_password
@@ -116,10 +124,8 @@ class MarketManager:
         if cls.check_username(username):
             username_clean = cls.__santatize_username(username)
             plain_password = cls.__generate_random_pass()
-            hash = bcrypt.encrypt(plain_password, rounds=13)
-            hash_result = hash
-            rounds_striped = hash_result.strip('$2a$13$')
-            salt = rounds_striped[:22]
+            hash = cls._gen_pwhash(plain_password)
+            salt = cls._get_salt(hash)
             cursor = connections['market'].cursor()
             cursor.execute(cls.SQL_UPDATE_PASSWORD, [hash, salt, username_clean])
             return plain_password
@@ -133,10 +139,8 @@ class MarketManager:
         try:
             username_clean = cls.__santatize_username(username)
             plain_password = cls.__generate_random_pass()
-            hash = bcrypt.encrypt(plain_password, rounds=13)
-            hash_result = hash
-            rounds_striped = hash_result.strip('$2a$13$')
-            salt = rounds_striped[:22]
+            hash = cls._gen_pwhash(plain_password)
+            salt = cls._get_salt(hash)
             cursor = connections['market'].cursor()
             cursor.execute(cls.SQL_UPDATE_USER, [hash, salt, username_clean])
             return username_clean, plain_password

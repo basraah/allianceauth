@@ -18,6 +18,7 @@ from alliance_auth.tests.auth_utils import AuthUtils
 from .auth_hooks import IpboardService
 from .models import IpboardUser
 from .tasks import IpboardTasks
+from .manager import IPBoardManager
 
 MODULE_PATH = 'services.modules.ipboard'
 
@@ -188,3 +189,19 @@ class IpboardViewsTestCase(TestCase):
 
         self.assertTrue(manager.update_user_password.called)
         self.assertTemplateUsed(response, 'registered/service_credentials.html')
+
+
+class IpboardManagerTestCase(TestCase):
+    def setUp(self):
+        self.manager = IPBoardManager
+
+    def test_generate_random_password(self):
+        password = self.manager._IPBoardManager__generate_random_pass()
+
+        self.assertEqual(len(password), 16)
+        self.assertIsInstance(password, type(''))
+
+    def test_gen_pwhash(self):
+        pwhash = self.manager._gen_pwhash('test')
+
+        self.assertEqual(pwhash, '098f6bcd4621d373cade4e832627b4f6')

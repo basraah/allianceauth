@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
-import os
+import random
+import string
 import hashlib
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -22,7 +23,7 @@ class MumbleManager:
 
     @staticmethod
     def __generate_random_pass():
-        return os.urandom(8).encode('hex')
+        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(16)])
 
     @staticmethod
     def __generate_username(username, corp_ticker):
@@ -34,7 +35,7 @@ class MumbleManager:
 
     @staticmethod
     def _gen_pwhash(password):
-        return hashlib.sha1(password).hexdigest()
+        return hashlib.sha1(password.encode('utf-8')).hexdigest()
 
     @staticmethod
     def create_user(user, corp_ticker, username, blue=False):
