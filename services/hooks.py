@@ -44,6 +44,14 @@ class ServicesHook:
     def validate_user(self, user):
         pass
 
+    def sync_nickname(self, user):
+        """
+        Sync the users nickname
+        :param user: Django.contrib.auth.models.User
+        :return: None
+        """
+        pass
+
     def update_groups(self, user):
         """
         Update the users group membership
