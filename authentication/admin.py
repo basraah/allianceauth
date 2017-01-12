@@ -38,16 +38,6 @@ class AuthServicesInfoManager(admin.ModelAdmin):
 
     search_fields = [
         'user__username',
-        'ipboard_username',
-        'xenforo_username',
-        'forum_username',
-        'jabber_username',
-        'mumble_username',
-        'teamspeak3_uid',
-        'discord_uid',
-        'ips4_username',
-        'smf_username',
-        'market_username',
         'main_char_id',
     ]
     list_display = ('user', 'main_character')
