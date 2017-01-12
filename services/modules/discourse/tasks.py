@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from alliance_auth.celery import app
+from alliance_auth.celeryapp import app
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from notifications import notify

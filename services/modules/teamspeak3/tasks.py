@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 
-from alliance_auth.celery import app
+from alliance_auth.celeryapp import app
 from celery.schedules import crontab
 from django.conf import settings
 from django.contrib.auth.models import User
