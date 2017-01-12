@@ -9,7 +9,7 @@ class Phpbb3User(models.Model):
                                 primary_key=True,
                                 on_delete=models.CASCADE,
                                 related_name='phpbb3')
-    username = models.CharField(max_length=254, blank=True, default="")
+    username = models.CharField(max_length=254)
 
     def __str__(self):
         return self.username

@@ -20,8 +20,8 @@ class Migration(migrations.Migration):
             name='Ips4User',
             fields=[
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, related_name='ips4', serialize=False, to=settings.AUTH_USER_MODEL)),
-                ('username', models.CharField(blank=True, default='', max_length=254)),
-                ('id', models.CharField(blank=True, default='', max_length=254)),
+                ('username', models.CharField(max_length=254)),
+                ('id', models.CharField(max_length=254)),
             ],
         ),
     ]

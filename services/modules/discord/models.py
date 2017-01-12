@@ -9,4 +9,4 @@ class DiscordUser(models.Model):
                                 primary_key=True,
                                 on_delete=models.CASCADE,
                                 related_name='discord')
-    uid = models.CharField(max_length=254, blank=True, default="")
+    uid = models.CharField(max_length=254)

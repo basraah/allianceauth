@@ -19,8 +19,8 @@ class Migration(migrations.Migration):
             name='Teamspeak3User',
             fields=[
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, related_name='teamspeak3', serialize=False, to=settings.AUTH_USER_MODEL)),
-                ('uid', models.CharField(blank=True, default='', max_length=254)),
-                ('perm_key', models.CharField(blank=True, default='', max_length=254)),
+                ('uid', models.CharField(max_length=254)),
+                ('perm_key', models.CharField(max_length=254)),
             ],
         ),
     ]

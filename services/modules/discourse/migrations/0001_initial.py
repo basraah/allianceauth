@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             name='DiscourseUser',
             fields=[
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, related_name='discourse', serialize=False, to=settings.AUTH_USER_MODEL)),
-                ('enabled', models.BooleanField(default=False)),
+                ('enabled', models.BooleanField()),
             ],
         ),
     ]

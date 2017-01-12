@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             name='XenforoUser',
             fields=[
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, related_name='xenforo', serialize=False, to=settings.AUTH_USER_MODEL)),
-                ('username', models.CharField(blank=True, default='', max_length=254)),
+                ('username', models.CharField(max_length=254)),
             ],
         ),
     ]

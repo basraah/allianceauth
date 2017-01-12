@@ -9,8 +9,8 @@ class Teamspeak3User(models.Model):
                                 primary_key=True,
                                 on_delete=models.CASCADE,
                                 related_name='teamspeak3')
-    uid = models.CharField(max_length=254, blank=True, default="")
-    perm_key = models.CharField(max_length=254, blank=True, default="")
+    uid = models.CharField(max_length=254)
+    perm_key = models.CharField(max_length=254)
 
     def __str__(self):
         return self.uid

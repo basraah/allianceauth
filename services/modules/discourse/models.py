@@ -9,4 +9,4 @@ class DiscourseUser(models.Model):
                                 primary_key=True,
                                 on_delete=models.CASCADE,
                                 related_name='discourse')
-    enabled = models.BooleanField(default=False, blank=True)
+    enabled = models.BooleanField()
