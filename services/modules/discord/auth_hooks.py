@@ -34,6 +34,10 @@ class DiscordService(ServicesHook):
         if DiscordTasks.has_account(user) and not self.service_active_for_user(user):
             self.delete_user(user, notify_user=True)
 
+    def sync_nickname(self, user):
+        logger.debug('Syncing %s nickname for user %s' % (self.name, user))
+        DiscordTasks.update_nickname.delay(user.pk)
+
     def update_all_groups(self):
         logger.debug('Update all %s groups called' % self.name)
         DiscordTasks.update_all_groups.delay()

@@ -97,6 +97,19 @@ class DiscordHooksTestCase(TestCase):
             none_discord = User.objects.get(username=self.none_user).discord
 
     @mock.patch(MODULE_PATH + '.tasks.DiscordOAuthManager')
+    def test_sync_nickname(self, manager):
+        service = self.service()
+        member = User.objects.get(username=self.member)
+        AuthUtils.add_main_character(member, 'test user', '12345', corp_ticker='AAUTH')
+
+        service.sync_nickname(member)
+
+        self.assertTrue(manager.update_nickname.called)
+        args, kwargs = manager.update_nickname.call_args
+        self.assertEqual(args[0], member.discord.uid)
+        self.assertEqual(args[1], 'test user')
+
+    @mock.patch(MODULE_PATH + '.tasks.DiscordOAuthManager')
     def test_delete_user(self, manager):
         member = User.objects.get(username=self.member)
 
