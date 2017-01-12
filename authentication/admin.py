@@ -54,8 +54,23 @@ def make_service_hooks_update_groups_action(service):
             service.update_groups(user)
 
     update_service_groups.__name__ = str('update_{}_groups'.format(slugify(service.name)))
-    update_service_groups.short_description = "Sync {} groups for selected users".format(service.title)
+    update_service_groups.short_description = "Sync groups for selected {} accounts".format(service.title)
     return update_service_groups
+
+
+def make_service_hooks_sync_nickname_action(service):
+    """
+    Make a sync_nickname admin action for the given service
+    :param service: services.hooks.ServicesHook
+    :return: fn to sync nickname for the selected users
+    """
+    def sync_nickname(modeladmin, request, queryset):
+        for user in queryset:  # queryset filtering doesn't work here?
+            service.sync_nickname(user)
+
+    sync_nickname.__name__ = str('sync_{}_nickname'.format(slugify(service.name)))
+    sync_nickname.short_description = "Sync nicknames for selected {} accounts".format(service.title)
+    return sync_nickname
 
 
 class UserAdmin(BaseUserAdmin):
@@ -70,6 +85,12 @@ class UserAdmin(BaseUserAdmin):
             # Check update_groups is redefined/overloaded
             if svc.update_groups.__module__ != ServicesHook.update_groups.__module__:
                 action = make_service_hooks_update_groups_action(svc)
+                actions[action.__name__] = (action,
+                                            action.__name__,
+                                            action.short_description)
+            # Create sync nickname action if service implements it
+            if svc.sync_nickname.__module__ != ServicesHook.sync_nickname.__module__:
+                action = make_service_hooks_sync_nickname_action(svc)
                 actions[action.__name__] = (action,
                                             action.__name__,
                                             action.short_description)
