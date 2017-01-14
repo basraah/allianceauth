@@ -10,3 +10,6 @@ class DiscordUser(models.Model):
                                 on_delete=models.CASCADE,
                                 related_name='discord')
     uid = models.CharField(max_length=254)
+
+    def __str__(self):
+        return "{} - {}".format(self.user.username, self.uid)

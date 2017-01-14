@@ -10,3 +10,6 @@ class DiscourseUser(models.Model):
                                 on_delete=models.CASCADE,
                                 related_name='discourse')
     enabled = models.BooleanField()
+
+    def __str__(self):
+        return self.user.username
