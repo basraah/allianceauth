@@ -30,6 +30,13 @@ CELERYBEAT_SCHEDULE = {
         'schedule': crontab(minute='*/30'),
     },
     """
+    """
+    Uncomment this if you are using the SeAT service
+    'run_seat_api_sync': {
+        'task': 'services.modules.seat.tasks.SeatTasks.run_api_sync',
+        'schedule': crontab(minute='*/30'),
+    },
+    """
 }
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -83,6 +90,7 @@ INSTALLED_APPS = [
     'services.modules.ips4',
     'services.modules.market',
     'services.modules.openfire',
+    'services.modules.seat',
     'services.modules.smf',
     'services.modules.phpbb3',
     'services.modules.xenforo',
@@ -290,6 +298,7 @@ BLUE_ALLIANCE_GROUPS = 'True' == os.environ.get('AA_BLUE_ALLIANCE_GROUPS', 'Fals
 # ENABLE_AUTH_DISCORD - Enable Discord support in the auth for auth'd members
 # ENABLE_AUTH_DISCOURSE - Enable Discourse support in the auth for auth'd members
 # ENABLE_AUTH_IPS4 - Enable IPS4 support in the auth for auth'd members
+# ENABLE_AUTH_SEAT = Enable SeAT support in the auth for auth'd members
 # ENABLE_AUTH_SMF - Enable SMF forum support in the auth for auth'd members
 # ENABLE_AUTH_MARKET = Enable Alliance Market support in auth for auth'd members
 # ENABLE_AUTH_XENFORO = Enable XenForo forums support in the auth for auth'd members
@@ -302,6 +311,7 @@ ENABLE_AUTH_TEAMSPEAK3 = 'True' == os.environ.get('AA_ENABLE_AUTH_TEAMSPEAK3', '
 ENABLE_AUTH_DISCORD = 'True' == os.environ.get('AA_ENABLE_AUTH_DISCORD', 'False')
 ENABLE_AUTH_DISCOURSE = 'True' == os.environ.get('AA_ENABLE_AUTH_DISCOURSE', 'False')
 ENABLE_AUTH_IPS4 = 'True' == os.environ.get('AA_ENABLE_AUTH_IPS4', 'False')
+ENABLE_AUTH_SEAT = 'True' == os.environ.get('AA_ENABLE_AUTH_SEAT', 'False')
 ENABLE_AUTH_SMF = 'True' == os.environ.get('AA_ENABLE_AUTH_SMF', 'False')
 ENABLE_AUTH_MARKET = 'True' == os.environ.get('AA_ENABLE_AUTH_MARKET', 'False')
 ENABLE_AUTH_XENFORO = 'True' == os.environ.get('AA_ENABLE_AUTH_XENFORO', 'False')
@@ -316,6 +326,7 @@ ENABLE_AUTH_XENFORO = 'True' == os.environ.get('AA_ENABLE_AUTH_XENFORO', 'False'
 # ENABLE_BLUE_DISCORD - Enable Discord support in the auth for blues
 # ENABLE_BLUE_DISCOURSE - Enable Discord support in the auth for blues
 # ENABLE_BLUE_IPS4 - Enable IPS4 forum support in the auth for blues
+# ENABLE_BLUE_SEAT = Enable SeAT support in the auth for blues
 # ENABLE_BLUE_SMF - Enable SMF forum support in the auth for blues
 # ENABLE_BLUE_MARKET - Enable Alliance Market in the auth for blues
 # ENABLE_BLUE_XENFORO = Enable XenForo forum support in the auth for blue 
@@ -328,6 +339,7 @@ ENABLE_BLUE_TEAMSPEAK3 = 'True' == os.environ.get('AA_ENABLE_BLUE_TEAMSPEAK3', '
 ENABLE_BLUE_DISCORD = 'True' == os.environ.get('AA_ENABLE_BLUE_DISCORD', 'False')
 ENABLE_BLUE_DISCOURSE = 'True' == os.environ.get('AA_ENABLE_BLUE_DISCOURSE', 'False')
 ENABLE_BLUE_IPS4 = 'True' == os.environ.get('AA_ENABLE_BLUE_IPS4', 'False')
+ENABLE_BLUE_SEAT = 'True' == os.environ.get('AA_ENABLE_BLUE_SEAT', 'False')
 ENABLE_BLUE_SMF = 'True' == os.environ.get('AA_ENABLE_BLUE_SMF', 'False')
 ENABLE_BLUE_MARKET = 'True' == os.environ.get('AA_ENABLE_BLUE_MARKET', 'False')
 ENABLE_BLUE_XENFORO = 'True' == os.environ.get('AA_ENABLE_BLUE_XENFORO', 'False')
@@ -546,6 +558,14 @@ IPS4_DB = {
     'PORT': os.environ.get('AA_DB_IPS4_PORT', '3306'),
 }
 
+#####################################
+# SEAT Configuration
+#####################################
+# SEAT_URL - base url of the seat install (no trailing slash)
+# SEAT_XTOKEN - API key X-Token provided by SeAT
+#####################################
+SEAT_URL = os.environ.get('AA_SEAT_URL', 'http://example.com/seat')
+SEAT_XTOKEN = os.environ.get('AA_SEAT_XTOKEN', '')
 
 ######################################
 # SMF Configuration
