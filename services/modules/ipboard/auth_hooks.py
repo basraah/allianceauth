@@ -18,7 +18,7 @@ class IpboardService(ServicesHook):
     def __init__(self):
         ServicesHook.__init__(self)
         self.name = 'ipboard'
-        self.service_url = settings.IPBOARD_ENDPOINT or None
+        self.service_url = settings.IPBOARD_ENDPOINT
         self.urlpatterns = urlpatterns
 
     @property
