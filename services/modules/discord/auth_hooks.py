@@ -50,7 +50,7 @@ class DiscordService(ServicesHook):
 
     def render_services_ctrl(self, request):
         return render_to_string(self.service_ctrl_template, {
-            'authinfo': {'discord_uid': request.user.discord.uid if DiscordTasks.has_account(request.user) else ''},
+            'discord_uid': request.user.discord.uid if DiscordTasks.has_account(request.user) else None,
         }, request=request)
 
 

@@ -6,7 +6,7 @@
     <td class="text-center"></td>
     <td class="text-center"><a href="https://discordapp.com/channels/{{ DISCORD_SERVER_ID }}/{{ DISCORD_SERVER_ID}}">https://discordapp.com</a></td>
     <td class="text-center">
-        {% ifequal authinfo.discord_uid "" %}
+        {% if not discord_uid %}
             <a href="{% url 'auth_activate_discord' %}" class="btn btn-warning">
                 <span class="glyphicon glyphicon-ok"></span>
             </a>
@@ -17,7 +17,7 @@
             <a href="{% url 'auth_deactivate_discord' %}" class="btn btn-danger">
                 <span class="glyphicon glyphicon-remove"></span>
             </a>
-        {% endifequal %}
+        {% endif %}
         {% if request.user.is_superuser %}
             <div class="text-center" style="padding-top:5px;">
                 <a type="button" class="btn btn-success" href="{% url 'auth_discord_add_bot' %}">{% trans "Link Discord" %} Server</a>
