@@ -1,5 +1,6 @@
 {% load i18n %}
 
+
 <tr>
     <td class="text-center">Discord</td>
     <td class="text-center"></td>
@@ -17,5 +18,10 @@
                 <span class="glyphicon glyphicon-remove"></span>
             </a>
         {% endifequal %}
+        {% if request.user.is_superuser %}
+            <div class="text-center" style="padding-top:5px;">
+                <a type="button" class="btn btn-success" href="{% url 'auth_discord_add_bot' %}">{% trans "Link Discord" %} Server</a>
+            </div>
+        {% endif %}
     </td>
 </tr>

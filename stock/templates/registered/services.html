@@ -10,14 +10,6 @@
 {% block content %}
     <div class="col-lg-12">
     <h1 class="page-header text-center">{% trans "Available Services" %}</h1>
-    {% if SHOW_DISCORD %}
-        {% if request.user.is_superuser %}
-            <div class="text-center">
-                <a type="button" class="btn btn-lg btn-success" href="{% url 'auth_discord_add_bot' %}">{% trans "Link Discord" %} Server</a>
-            </div>
-            <br>
-        {% endif %}
-    {% endif %}
         <table class="table table-bordered">
             <tr>
                 <th class="text-center">{% trans "Service" %}</th>
