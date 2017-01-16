@@ -40,7 +40,7 @@ def activate_ipboard_forum(request):
         return render(request, 'registered/service_credentials.html',
                       context={'credentials': credentials, 'service': 'IPBoard'})
     else:
-        logger.error("UnSuccessful attempt to activate ipboard for user %s" % request.user)
+        logger.error("Unsuccessful attempt to activate ipboard for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your IPBoard account.')
     return redirect("auth_services")
 
@@ -105,6 +105,6 @@ def reset_ipboard_password(request):
             return render(request, 'registered/service_credentials.html',
                           context={'credentials': credentials, 'service': 'IPBoard'})
 
-    logger.error("UnSuccessful attempt to reset ipboard password for user %s" % request.user)
+    logger.error("Unsuccessful attempt to reset ipboard password for user %s" % request.user)
     messages.error(request, 'An error occurred while processing your IPBoard account.')
     return redirect("auth_services")

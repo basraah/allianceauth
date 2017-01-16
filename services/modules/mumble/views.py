@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -86,7 +87,7 @@ def reset_mumble_password(request):
         return render(request, 'registered/service_credentials.html',
                       context={'credentials': credentials, 'service': 'Mumble'})
     else:
-        logger.error("UnSuccessful attempt to reset mumble password for user %s" % request.user)
+        logger.error("Unsuccessful attempt to reset mumble password for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your Mumble account.')
     return redirect("auth_services")
 

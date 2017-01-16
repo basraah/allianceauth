@@ -38,7 +38,7 @@ def activate_ips4(request):
         return render(request, 'registered/service_credentials.html',
                       context={'credentials': credentials, 'service': 'IPSuite4'})
     else:
-        logger.error("UnSuccessful attempt to activate IPS4 for user %s" % request.user)
+        logger.error("Unsuccessful attempt to activate IPS4 for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your IPSuite4 account.')
     return redirect("auth_services")
 
@@ -101,7 +101,7 @@ def deactivate_ips4(request):
         logger.info("Successfully deactivated IPS4 for user %s" % request.user)
         messages.success(request, 'Deactivated IPSuite4 account.')
     else:
-        logger.error("UnSuccessful attempt to deactivate IPS4 for user %s" % request.user)
+        logger.error("Unsuccessful attempt to deactivate IPS4 for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your IPSuite4 account.')
     return redirect("auth_services")
 

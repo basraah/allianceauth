@@ -39,7 +39,7 @@ def activate_smf(request):
         return render(request, 'registered/service_credentials.html',
                       context={'credentials': credentials, 'service': 'SMF'})
     else:
-        logger.error("UnSuccessful attempt to activate smf for user %s" % request.user)
+        logger.error("Unsuccessful attempt to activate smf for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your SMF account.')
     return redirect("auth_services")
 
@@ -54,7 +54,7 @@ def deactivate_smf(request):
         logger.info("Successfully deactivated smf for user %s" % request.user)
         messages.success(request, 'Deactivated SMF account.')
     else:
-        logger.error("UnSuccessful attempt to activate smf for user %s" % request.user)
+        logger.error("Unsuccessful attempt to activate smf for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your SMF account.')
     return redirect("auth_services")
 

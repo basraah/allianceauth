@@ -43,7 +43,7 @@ def activate_jabber(request):
         return render(request, 'registered/service_credentials.html',
                       context={'credentials': credentials, 'service': 'Jabber'})
     else:
-        logger.error("UnSuccessful attempt to activate jabber for user %s" % request.user)
+        logger.error("Unsuccessful attempt to activate jabber for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your jabber account.')
     return redirect("auth_services")
 
@@ -56,7 +56,7 @@ def deactivate_jabber(request):
         logger.info("Successfully deactivated jabber for user %s" % request.user)
         messages.success(request, 'Deactivated jabber account.')
     else:
-        logger.error("UnSuccessful attempt to deactivate jabber for user %s" % request.user)
+        logger.error("Unsuccessful attempt to deactivate jabber for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your jabber account.')
     return redirect("auth_services")
 

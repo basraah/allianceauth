@@ -35,7 +35,7 @@ def activate_xenforo_forum(request):
                       context={'credentials': credentials, 'service': 'XenForo'})
 
     else:
-        logger.error("UnSuccessful attempt to activate xenforo for user %s" % request.user)
+        logger.error("Unsuccessful attempt to activate xenforo for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your XenForo account.')
     return redirect("auth_services")
 

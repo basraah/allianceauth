@@ -38,7 +38,7 @@ def activate_market(request):
             }
             return render(request, 'registered/service_credentials.html',
                           context={'credentials': credentials, 'service': 'Alliance Market'})
-    logger.error("UnSuccessful attempt to activate market for user %s" % request.user)
+    logger.error("Unsuccessful attempt to activate market for user %s" % request.user)
     messages.error(request, 'An error occurred while processing your Alliance Market account.')
     return redirect("auth_services")
 
@@ -52,7 +52,7 @@ def deactivate_market(request):
         logger.info("Successfully deactivated market for user %s" % request.user)
         messages.success(request, 'Deactivated Alliance Market account.')
     else:
-        logger.error("UnSuccessful attempt to activate market for user %s" % request.user)
+        logger.error("Unsuccessful attempt to activate market for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your Alliance Market account.')
     return redirect("auth_services")
 
