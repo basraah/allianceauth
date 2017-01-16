@@ -24,7 +24,7 @@ def deactivate_discord(request):
         logger.info("Successfully deactivated discord for user %s" % request.user)
         messages.success(request, 'Deactivated Discord account.')
     else:
-        logger.error("UnSuccessful attempt to deactivate discord for user %s" % request.user)
+        logger.error("Unsuccessful attempt to deactivate discord for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your Discord account.')
     return redirect("auth_services")
 
