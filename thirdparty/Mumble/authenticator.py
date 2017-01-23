@@ -764,6 +764,7 @@ def allianceauth_check_hash(password, hash, hash_type):
     elif hash_type == 'bcrypt-sha256':
         return bcrypt_sha256.verify(password, hash)
     else:
+        warning("No valid hash function found for %s" % hash_type)
         return False
 
 
