@@ -213,7 +213,7 @@ def reverse(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = optional_dependencies() + [
-        ('authentication', '0009_auto_20161021_0228'),
+        ('authentication', '0012_remove_add_delete_authservicesinfo_permissions'),
     ]
 
     operations = [
