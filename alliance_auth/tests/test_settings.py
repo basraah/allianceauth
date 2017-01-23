@@ -53,8 +53,9 @@ INSTALLED_APPS = [
     'corputils',
     'fleetactivitytracking',
     'notifications',
-    'eve_sso',
+    'esi',
     'geelweb.django.navhelper',
+    'bootstrap_pagination',
     'services.modules.mumble',
     'services.modules.discord',
     'services.modules.discourse',
@@ -114,7 +115,7 @@ TEMPLATES = [
                 'notifications.context_processors.user_notification_count',
                 'authentication.context_processors.states',
                 'authentication.context_processors.membership_state',
-                'authentication.context_processors.sso',
+                'groupmanagement.context_processors.can_manage_groups',
             ],
         },
     },
@@ -165,6 +166,12 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger'
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}
+
 #####################################################
 ##
 ## Auth configuration starts here
@@ -203,11 +210,12 @@ EMAIL_USE_TLS = 'True' == os.environ.get('AA_EMAIL_USE_TLS', 'True')
 # KILLBOARD_URL - URL for your killboard. Blank to hide link
 # MEDIA_URL - URL for your media page (youtube etc). Blank to hide link
 # FORUM_URL - URL for your forums. Blank to hide link
-# SMF_URL - URL for your SMF forums.
+# SITE_NAME - Name of the auth site.
 ####################
 KILLBOARD_URL = os.environ.get('AA_KILLBOARD_URL', '')
 EXTERNAL_MEDIA_URL = os.environ.get('AA_EXTERNAL_MEDIA_URL', '')
 FORUM_URL = os.environ.get('AA_FORUM_URL', '')
+SITE_NAME = os.environ.get('AA_SITE_NAME', 'Test Alliance Auth')
 
 ###################
 # SSO Settings
@@ -218,9 +226,9 @@ FORUM_URL = os.environ.get('AA_FORUM_URL', '')
 # Callback URL should be http://mydomain.com/sso/callback
 # Leave callback blank to hide SSO button on login page
 ###################
-EVE_SSO_CLIENT_ID = os.environ.get('AA_EVE_SSO_CLIENT_ID', '')
-EVE_SSO_CLIENT_SECRET = os.environ.get('AA_EVE_SSO_CLIENT_SECRET', '')
-EVE_SSO_CALLBACK_URL = os.environ.get('AA_EVE_SSO_CALLBACK_URL', '')
+ESI_SSO_CLIENT_ID = os.environ.get('AA_ESI_SSO_CLIENT_ID', '')
+ESI_SSO_CLIENT_SECRET = os.environ.get('AA_ESI_SSO_CLIENT_SECRET', '')
+ESI_SSO_CALLBACK_URL = os.environ.get('AA_ESI_SSO_CALLBACK_URL', '')
 
 #########################
 # Default Group Settings
@@ -335,6 +343,21 @@ BLUE_API_ACCOUNT = 'True' == os.environ.get('AA_BLUE_API_ACCOUNT', 'True')
 REJECT_OLD_APIS = 'True' == os.environ.get('AA_REJECT_OLD_APIS', 'False')
 REJECT_OLD_APIS_MARGIN = os.environ.get('AA_REJECT_OLD_APIS_MARGIN', 50)
 API_SSO_VALIDATION = 'True' == os.environ.get('AA_API_SSO_VALIDATION', 'False')
+
+#######################
+# EVE Provider Settings
+#######################
+# EVEONLINE_CHARACTER_PROVIDER - Name of default data source for getting eve character data
+# EVEONLINE_CORP_PROVIDER - Name of default data source for getting eve corporation data
+# EVEONLINE_ALLIANCE_PROVIDER - Name of default data source for getting eve alliance data
+# EVEONLINE_ITEMTYPE_PROVIDER - Name of default data source for getting eve item type data
+#
+# Available sources are 'esi' and 'xml'. Leaving blank results in the default 'esi' being used.
+#######################
+EVEONLINE_CHARACTER_PROVIDER = os.environ.get('AA_EVEONLINE_CHARACTER_PROVIDER', 'xml')
+EVEONLINE_CORP_PROVIDER = os.environ.get('AA_EVEONLINE_CORP_PROVIDER', 'xml')
+EVEONLINE_ALLIANCE_PROVIDER = os.environ.get('AA_EVEONLINE_ALLIANCE_PROVIDER', 'xml')
+EVEONLINE_ITEMTYPE_PROVIDER = os.environ.get('AA_EVEONLINE_ITEMTYPE_PROVIDER', 'xml')
 
 #####################
 # Alliance Market
