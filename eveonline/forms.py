@@ -28,7 +28,10 @@ class UpdateKeyForm(forms.Form):
             raise forms.ValidationError("API ID must be a number")
 
     def clean(self):
-        super(UpdateKeyForm, self).clean()
+        if 'api_id' not in self.cleaned_data or 'api_key' not in self.cleaned_data:
+            # need to check if api_id and vcode in cleaned_data because
+            # if they fail, they get removed from the dict but this method still happens
+            return self.cleaned_data
 
         if EveManager.check_if_api_key_pair_exist(self.cleaned_data['api_id']):
             logger.debug("UpdateKeyForm failed cleaning as API id %s already exists." % self.cleaned_data['api_id'])
@@ -46,7 +49,4 @@ class UpdateKeyForm(forms.Form):
             raise forms.ValidationError(str(e))
         except evelink.api.APIError as e:
             logger.debug("Got error code %s while validating API %s" % (e.code, self.cleaned_data['api_id']))
-            if int(e.code) in [221, 222]:
-                raise forms.ValidationError("API key failed validation")
-            else:
-                raise forms.ValidationError("Failed to reach API servers")
+            raise forms.ValidationError('Error while checking API key (%s)' % e.code)

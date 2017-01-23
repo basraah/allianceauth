@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-
 from eveonline.forms import UpdateKeyForm
 from eveonline.managers import EveManager
 from authentication.managers import AuthServicesInfoManager
@@ -11,8 +10,7 @@ from eveonline.models import EveApiKeyPair, EveCharacter
 from authentication.models import AuthServicesInfo
 from authentication.tasks import set_state
 from eveonline.tasks import refresh_api
-
-from eve_sso.decorators import token_required
+from esi.decorators import token_required
 from django.conf import settings
 import logging
 
@@ -30,7 +28,7 @@ def add_api_key(request):
                                             api_key=form.cleaned_data['api_key']).exists():
                 # allow orphaned keys to proceed to SSO validation upon re-entry
                 api_key = EveApiKeyPair.objects.get(api_id=form.cleaned_data['api_id'],
-                                                   api_key=form.cleaned_data['api_key'])
+                                                    api_key=form.cleaned_data['api_key'])
             elif EveApiKeyPair.objects.filter(api_id=form.cleaned_data['api_id']).exists():
                 logger.warn('API %s re-added with different vcode.' % form.cleaned_data['api_id'])
                 EveApiKeyPair.objects.filter(api_id=form.cleaned_data['api_id']).delete()
@@ -46,19 +44,19 @@ def add_api_key(request):
                 api_key.save()
                 owner = request.user
             # Grab characters associated with the key pair
-            characters = EveApiManager.get_characters_from_api(form.cleaned_data['api_id'],
-                                                               form.cleaned_data['api_key'])
-            EveManager.create_characters_from_list(characters, owner, form.cleaned_data['api_id'])
+            characters = EveManager.get_characters_from_api(api_key)
+            [EveManager.create_character_obj(c, owner, api_key.api_id) for c in characters if
+             not EveCharacter.objects.filter(character_id=c.id).exists()]
             logger.info("Successfully processed api add form for user %s" % request.user)
             if not settings.API_SSO_VALIDATION:
                 messages.success(request, 'Added API key %s to your account.' % form.cleaned_data['api_id'])
-                auth = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
+                auth = AuthServicesInfo.objects.get(user=request.user)
                 if not auth.main_char_id:
                     return redirect('auth_characters')
-                return redirect("/api_key_management/")
+                return redirect("auth_dashboard")
             else:
                 logger.debug('Requesting SSO validation of API %s by user %s' % (api_key.api_id, request.user))
-                return render(request, 'registered/apisso.html', context={'api':api_key})
+                return render(request, 'registered/apisso.html', context={'api': api_key})
         else:
             logger.debug("Form invalid: returning to form.")
     else:
@@ -70,18 +68,17 @@ def add_api_key(request):
 
 @login_required
 @token_required(new=True)
-def api_sso_validate(request, tokens, api_id):
+def api_sso_validate(request, token, api_id):
     logger.debug('api_sso_validate called by user %s for api %s' % (request.user, api_id))
     api = get_object_or_404(EveApiKeyPair, api_id=api_id)
     if api.user and api.user != request.user:
         logger.warning('User %s attempting to take ownership of api %s from %s' % (request.user, api_id, api.user))
         messages.warning(request, 'API %s already claimed by user %s' % (api_id, api.user))
-        return redirect('auth_api_key_management')
+        return redirect('auth_dashboard')
     elif api.sso_verified:
         logger.debug('API %s has already been verified.' % api_id)
         messages.info(request, 'API %s has already been verified' % api_id)
-        return redirect('auth_api_key_management')
-    token = tokens[0]
+        return redirect('auth_dashboard')
     logger.debug('API %s has not been verified. Checking if token for %s matches.' % (api_id, token.character_name))
     characters = EveApiManager.get_characters_from_api(api.api_id, api.api_key).result
     if token.character_id in characters:
@@ -90,59 +87,72 @@ def api_sso_validate(request, tokens, api_id):
         api.save()
         EveCharacter.objects.filter(character_id__in=characters).update(user=request.user, api_id=api_id)
         messages.success(request, 'Confirmed ownership of API %s' % api.api_id)
-        auth, c = AuthServicesInfo.objects.get_or_create(user=request.user)
+        auth = AuthServicesInfo.objects.get(user=request.user)
         if not auth.main_char_id:
             return redirect('auth_characters')
-        return redirect('auth_api_key_management')
+        return redirect('auth_dashboard')
     else:
-        messages.warning(request, '%s not found on API %s. Please SSO as a character on the API.' % (token.character_name, api.api_id))
-    return render(request, 'registered/apisso.html', context={'api':api})
+        messages.warning(request, '%s not found on API %s. Please SSO as a character on the API.' % (
+            token.character_name, api.api_id))
+    return render(request, 'registered/apisso.html', context={'api': api})
 
 
 @login_required
-def api_key_management_view(request):
-    logger.debug("api_key_management_view called by user %s" % request.user)
-    context = {
-        'apikeypairs': EveManager.get_api_key_pairs(request.user.id),
-        'api_sso_validation': settings.API_SSO_VALIDATION or False
-    }
+def dashboard_view(request):
+    logger.debug("dashboard_view called by user %s" % request.user)
+    auth_info = AuthServicesInfo.objects.get(user=request.user)
+    apikeypairs = EveManager.get_api_key_pairs(request.user.id)
+    sso_validation = settings.API_SSO_VALIDATION or False
+    api_chars = []
 
-    return render(request, 'registered/apikeymanagment.html', context=context)
+    if apikeypairs:
+        for api in apikeypairs:
+            api_chars.append({
+                'id': api.api_id,
+                'sso_verified': api.sso_verified if sso_validation else True,
+                'characters': EveCharacter.objects.filter(api_id=api.api_id),
+            })
+
+    context = {
+        'main': EveManager.get_character_by_id(auth_info.main_char_id),
+        'apis': api_chars,
+        'api_sso_validation': settings.API_SSO_VALIDATION or False,
+    }
+    return render(request, 'registered/dashboard.html', context=context)
 
 
 @login_required
 def api_key_removal(request, api_id):
     logger.debug("api_key_removal called by user %s for api id %s" % (request.user, api_id))
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
+    authinfo = AuthServicesInfo.objects.get(user=request.user)
     EveManager.delete_api_key_pair(api_id, request.user.id)
     EveManager.delete_characters_by_api_id(api_id, request.user.id)
     messages.success(request, 'Deleted API key %s' % api_id)
     logger.info("Succesfully processed api delete request by user %s for api %s" % (request.user, api_id))
-    if EveCharacter.objects.filter(character_id=authinfo.main_char_id).exists():
-        return redirect("auth_api_key_management")
-    else:
+    if not EveCharacter.objects.filter(character_id=authinfo.main_char_id).exists():
         authinfo.main_char_id = None
         authinfo.save()
         set_state(request.user)
-        return redirect("auth_characters")
+    return redirect("auth_dashboard")
 
 
 @login_required
 def characters_view(request):
     logger.debug("characters_view called by user %s" % request.user)
-    render_items = {'characters': EveManager.get_characters_by_owner_id(request.user.id),
-                    'authinfo': AuthServicesInfo.objects.get_or_create(user=request.user)[0]}
+    render_items = {'characters': EveCharacter.objects.filter(user=request.user),
+                    'authinfo': AuthServicesInfo.objects.get(user=request.user)}
     return render(request, 'registered/characters.html', context=render_items)
 
 
 @login_required
 def main_character_change(request, char_id):
     logger.debug("main_character_change called by user %s for character id %s" % (request.user, char_id))
-    if EveManager.check_if_character_owned_by_user(char_id, request.user):
+    if EveCharacter.objects.filter(character_id=char_id).exists() and EveCharacter.objects.get(
+            character_id=char_id).user == request.user:
         AuthServicesInfoManager.update_main_char_id(char_id, request.user)
         messages.success(request, 'Changed main character ID to %s' % char_id)
         set_state(request.user)
-        return redirect("auth_characters")
+        return redirect("auth_dashboard")
     messages.error(request, 'Failed to change main character - selected character is not owned by your account.')
     return redirect("auth_characters")
 
@@ -162,4 +172,4 @@ def user_refresh_api(request, api_id):
     else:
         messages.warning(request, 'Unable to locate API key %s' % api_id)
         logger.warn("User %s unable to refresh api id %s - api key not found" % (request.user, api_id))
-    return redirect("auth_api_key_management")
+    return redirect("auth_dashboard")

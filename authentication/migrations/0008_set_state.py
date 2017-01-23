@@ -8,12 +8,10 @@ from authentication.states import MEMBER_STATE, BLUE_STATE, NONE_STATE
 from django.conf import settings
 
 def determine_membership_by_character(char, apps):
-    if settings.IS_CORP:
-        if int(char.corporation_id) == int(settings.CORP_ID):
-            return MEMBER_STATE
-    else:
-        if int(char.alliance_id) == int(settings.ALLIANCE_ID):
-            return MEMBER_STATE
+    if str(char.corporation_id) in settings.STR_CORP_IDS:
+        return MEMBER_STATE
+    elif str(char.alliance_id) in settings.STR_ALLIANCE_IDS:
+        return MEMBER_STATE
     EveCorporationInfo = apps.get_model('eveonline', 'EveCorporationInfo')
     if EveCorporationInfo.objects.filter(corporation_id=char.corporation_id).exists() is False:
          return NONE_STATE
@@ -26,7 +24,7 @@ def determine_membership_by_character(char, apps):
 
 def determine_membership_by_user(user, apps):
     AuthServicesInfo = apps.get_model('authentication', 'AuthServicesInfo')
-    auth, c = AuthServicesInfo.objects.get_or_create(user=user)
+    auth = AuthServicesInfo.objects.get(user=user)
     if auth.main_char_id:
         EveCharacter = apps.get_model('eveonline', 'EveCharacter')
         if EveCharacter.objects.filter(character_id=auth.main_char_id).exists():
@@ -43,7 +41,7 @@ def set_state(user, apps):
     else:
         state = NONE_STATE
     AuthServicesInfo = apps.get_model('authentication', 'AuthServicesInfo')
-    auth = AuthServicesInfo.objects.get_or_create(user=user)[0]
+    auth = AuthServicesInfo.objects.get(user=user)
     if auth.state != state:
        auth.state = state
        auth.save()

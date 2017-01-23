@@ -23,6 +23,14 @@ class AuthServicesInfoManager(admin.ModelAdmin):
                 pass
         return None
 
+    @staticmethod
+    def has_delete_permission(request, obj=None):
+        return False
+
+    @staticmethod
+    def has_add_permission(request, obj=None):
+        return False
+
     search_fields = [
         'user__username',
         'main_char_id',

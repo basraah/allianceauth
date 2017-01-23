@@ -11,12 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    {% if IS_CORP %}
-        <title>{{ CORP_NAME }} - Login</title>
-    {% else %}
-        <title>{{ ALLIANCE_NAME }} - Login</title>
-    {% endif %}
-    
+    <title>{{ SITE_NAME }} - Login</title>
+
     <!-- Bootstrap Core CSS -->
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <!-- Custom Fonts -->
@@ -75,16 +71,14 @@
                         <a href="{% url 'auth_register_user' %}" class="btn btn-success btn-block btn-lg">{% trans "Register" %}</a>
                     </div>
                 </div>
-                {% if EVE_SSO_CALLBACK_URL %}
-                    <br>
-                    <div class="col-md-12">
-                        <p style="text-align:center">
-                            <a href="{% url 'auth_sso_login' %}">
-                                <img src="{% static 'img/sso/EVE_SSO_Login_Buttons_Large_Black.png' %}" border=0>
-                            </a>
-                        </p>
-                    </div>
-                {% endif %}                
+                <br>
+                <div class="col-md-12">
+                    <p style="text-align:center">
+                        <a href="{% url 'auth_sso_login' %}">
+                            <img src="{% static 'img/sso/EVE_SSO_Login_Buttons_Large_Black.png' %}" border=0>
+                        </a>
+                    </p>
+                </div>              
             </div>
         </div>
         

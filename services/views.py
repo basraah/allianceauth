@@ -49,7 +49,7 @@ def fleet_formatter_view(request):
 @members_and_blues()
 def services_view(request):
     logger.debug("services_view called by user %s" % request.user)
-    auth = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
+    auth = AuthServicesInfo.objects.get(user=request.user)
     char = None
     if auth.main_char_id:
         try:

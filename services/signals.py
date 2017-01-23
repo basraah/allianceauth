@@ -5,14 +5,11 @@ import logging
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models.signals import m2m_changed
-from django.db.models.signals import post_delete
-from django.db.models.signals import post_save
 from django.db.models.signals import pre_delete
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 from alliance_auth.hooks import get_hooks
-from authentication.models import AuthServicesInfo
 from authentication.tasks import disable_member
 from authentication.tasks import set_state
 
@@ -34,7 +31,7 @@ def m2m_changed_user_groups(sender, instance, action, *args, **kwargs):
             except:
                 logger.exception('Exception running update_groups for services module %s on user %s' % (svc, instance))
 
-    if action == "post_add" or action == "post_remove" or action == "post_clear":
+    if instance.pk and (action == "post_add" or action == "post_remove" or action == "post_clear"):
         logger.debug("Waiting for commit to trigger service group update for %s" % instance)
         transaction.on_commit(trigger_service_group_update)
 

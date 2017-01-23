@@ -20,7 +20,7 @@ from celery.schedules import crontab
 djcelery.setup_loader()
 
 # Celery configuration
-BROKER_URL = 'amqp://guest:guest@localhost:5672/'
+BROKER_URL = 'redis://localhost:6379/0'
 CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
 CELERYBEAT_SCHEDULE = {
     """
@@ -71,8 +71,11 @@ INSTALLED_APPS = [
     'corputils',
     'fleetactivitytracking',
     'notifications',
-    'eve_sso',
+    'esi',
     'geelweb.django.navhelper',
+    'bootstrap_pagination',
+
+    # Services
     'services.modules.mumble',
     'services.modules.discord',
     'services.modules.discourse',
@@ -131,7 +134,7 @@ TEMPLATES = [
                 'notifications.context_processors.user_notification_count',
                 'authentication.context_processors.states',
                 'authentication.context_processors.membership_state',
-                'authentication.context_processors.sso',
+                'groupmanagement.context_processors.can_manage_groups',
             ],
         },
     },
@@ -205,20 +208,21 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger'
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
 #####################################################
 ##
 ## Auth configuration starts here
 ##
 #####################################################
-
-###########################
-# ALLIANCE / CORP TOGGLE
-###########################
-# Specifies to run membership checks against corp or alliance
-# Set to FALSE for alliance
-# Set to TRUE for corp
-###########################
-IS_CORP = 'True' == os.environ.get('AA_IS_CORP', 'True')
 
 #################
 # EMAIL SETTINGS
@@ -230,7 +234,7 @@ IS_CORP = 'True' == os.environ.get('AA_IS_CORP', 'True')
 # EMAIL_HOST_PASSWORD - Email Password
 # EMAIL_USE_TLS - Set to use TLS encryption
 #################
-DOMAIN = os.environ.get('AA_DOMAIN', 'https://yourdomain.com')
+DOMAIN = os.environ.get('AA_DOMAIN', 'https://example.com')
 EMAIL_HOST = os.environ.get('AA_EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('AA_EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.environ.get('AA_EMAIL_HOST_USER', '')
@@ -243,24 +247,23 @@ EMAIL_USE_TLS = 'True' == os.environ.get('AA_EMAIL_USE_TLS', 'True')
 # KILLBOARD_URL - URL for your killboard. Blank to hide link
 # MEDIA_URL - URL for your media page (youtube etc). Blank to hide link
 # FORUM_URL - URL for your forums. Blank to hide link
-# SMF_URL - URL for your SMF forums.
+# SITE_NAME - Name of the auth site.
 ####################
 KILLBOARD_URL = os.environ.get('AA_KILLBOARD_URL', '')
 EXTERNAL_MEDIA_URL = os.environ.get('AA_EXTERNAL_MEDIA_URL', '')
 FORUM_URL = os.environ.get('AA_FORUM_URL', '')
+SITE_NAME = os.environ.get('AA_SITE_NAME', 'Alliance Auth')
 
 ###################
 # SSO Settings
 ###################
-# Optional SSO.
 # Get client ID and client secret from registering an app at
 # https://developers.eveonline.com/
-# Callback URL should be http://mydomain.com/sso/callback
-# Leave callback blank to hide SSO button on login page
+# Callback URL should be https://example.com/sso/callback
 ###################
-EVE_SSO_CLIENT_ID = os.environ.get('AA_EVE_SSO_CLIENT_ID', '')
-EVE_SSO_CLIENT_SECRET = os.environ.get('AA_EVE_SSO_CLIENT_SECRET', '')
-EVE_SSO_CALLBACK_URL = os.environ.get('AA_EVE_SSO_CALLBACK_URL', '')
+ESI_SSO_CLIENT_ID = os.environ.get('AA_ESI_SSO_CLIENT_ID', '')
+ESI_SSO_CLIENT_SECRET = os.environ.get('AA_ESI_SSO_CLIENT_SECRET', '')
+ESI_SSO_CALLBACK_URL = os.environ.get('AA_ESI_SSO_CALLBACK_URL', '')
 
 #########################
 # Default Group Settings
@@ -289,7 +292,6 @@ BLUE_ALLIANCE_GROUPS = 'True' == os.environ.get('AA_BLUE_ALLIANCE_GROUPS', 'Fals
 # ENABLE_AUTH_IPS4 - Enable IPS4 support in the auth for auth'd members
 # ENABLE_AUTH_SMF - Enable SMF forum support in the auth for auth'd members
 # ENABLE_AUTH_MARKET = Enable Alliance Market support in auth for auth'd members
-# ENABLE_AUTH_PATHFINDER = Enable Alliance Pathfinder suppor in auth for auth'd members
 # ENABLE_AUTH_XENFORO = Enable XenForo forums support in the auth for auth'd members
 #########################
 ENABLE_AUTH_FORUM = 'True' == os.environ.get('AA_ENABLE_AUTH_FORUM', 'False')
@@ -307,7 +309,6 @@ ENABLE_AUTH_XENFORO = 'True' == os.environ.get('AA_ENABLE_AUTH_XENFORO', 'False'
 #####################
 # Blue service Setup
 #####################
-# BLUE_STANDING - The default lowest standings setting to consider blue
 # ENABLE_BLUE_FORUM - Enable forum support in the auth for blues
 # ENABLE_BLUE_JABBER - Enable jabber support in the auth for blues
 # ENABLE_BLUE_MUMBLE - Enable mumble support in the auth for blues
@@ -317,10 +318,8 @@ ENABLE_AUTH_XENFORO = 'True' == os.environ.get('AA_ENABLE_AUTH_XENFORO', 'False'
 # ENABLE_BLUE_IPS4 - Enable IPS4 forum support in the auth for blues
 # ENABLE_BLUE_SMF - Enable SMF forum support in the auth for blues
 # ENABLE_BLUE_MARKET - Enable Alliance Market in the auth for blues
-# ENABLE_BLUE_PATHFINDER = Enable Pathfinder support in the auth for blues
 # ENABLE_BLUE_XENFORO = Enable XenForo forum support in the auth for blue 
 #####################
-BLUE_STANDING = float(os.environ.get('AA_BLUE_STANDING', '5.0'))
 ENABLE_BLUE_FORUM = 'True' == os.environ.get('AA_ENABLE_BLUE_FORUM', 'False')
 ENABLE_BLUE_JABBER = 'True' == os.environ.get('AA_ENABLE_BLUE_JABBER', 'False')
 ENABLE_BLUE_MUMBLE = 'True' == os.environ.get('AA_ENABLE_BLUE_MUMBLE', 'False')
@@ -334,27 +333,28 @@ ENABLE_BLUE_MARKET = 'True' == os.environ.get('AA_ENABLE_BLUE_MARKET', 'False')
 ENABLE_BLUE_XENFORO = 'True' == os.environ.get('AA_ENABLE_BLUE_XENFORO', 'False')
 
 #########################
-# Corp Configuration
+# Tenant Configuration
 #########################
-# If running in alliance mode, the following should be for the executor corp#
-# CORP_ID - Set this to your corp ID (get this from https://zkillboard.com/corporation/#######)
-# CORP_NAME - Set this to your Corporation Name
-# CORP_API_ID - Set this to the api id for the corp API key
-# CORP_API_VCODE - Set this to the api vcode for the corp API key
-########################
-CORP_ID = os.environ.get('AA_CORP_ID', '')
-CORP_NAME = os.environ.get('AA_CORP_NAME', '')
-CORP_API_ID = os.environ.get('AA_CORP_API_ID', '')
-CORP_API_VCODE = os.environ.get('AA_CORP_API_VCODE', '')
+# CORP_IDS - A list of corporation IDs to treat as members.
+# ALLIANCE_IDS - A list of alliance IDs to treat as members.
+# Any corps in a specified alliance will be treated as members, so do not include them in CORP_IDS
+#########################
+CORP_IDS = []
+ALLIANCE_IDS = []
 
 #########################
-# Alliance Configuration
+# Standings Configuration
 #########################
-# ALLIANCE_ID - Set this to your Alliance ID (get this from https://zkillboard.com/alliance/#######)
-# ALLIANCE_NAME - Set this to your Alliance Name
+# Add a corp API key to add blue standings to grant access.
+# CORP_API_ID - Set this to the api id for the corp API key
+# CORP_API_VCODE - Set this to the api vcode for the corp API key
+# BLUE_STANDING - The lowest standings value to consider blue
+# STANDING_LEVEL - The level of standings to query. Accepted values are 'corp' and 'alliance'.
 ########################
-ALLIANCE_ID = os.environ.get('AA_ALLIANCE_ID', '')
-ALLIANCE_NAME = os.environ.get('AA_ALLIANCE_NAME', '')
+CORP_API_ID = os.environ.get('AA_CORP_API_ID', '')
+CORP_API_VCODE = os.environ.get('AA_CORP_API_VCODE', '')
+BLUE_STANDING = float(os.environ.get('AA_BLUE_STANDING', '5.0'))
+STANDING_LEVEL = os.environ.get('AA_STANDING_LEVEL', 'corp')
 
 ########################
 # API Configuration
@@ -376,10 +376,25 @@ REJECT_OLD_APIS = 'True' == os.environ.get('AA_REJECT_OLD_APIS', 'False')
 REJECT_OLD_APIS_MARGIN = os.environ.get('AA_REJECT_OLD_APIS_MARGIN', 50)
 API_SSO_VALIDATION = 'True' == os.environ.get('AA_API_SSO_VALIDATION', 'False')
 
+#######################
+# EVE Provider Settings
+#######################
+# EVEONLINE_CHARACTER_PROVIDER - Name of default data source for getting eve character data
+# EVEONLINE_CORP_PROVIDER - Name of default data source for getting eve corporation data
+# EVEONLINE_ALLIANCE_PROVIDER - Name of default data source for getting eve alliance data
+# EVEONLINE_ITEMTYPE_PROVIDER - Name of default data source for getting eve item type data
+#
+# Available sources are 'esi' and 'xml'. Leaving blank results in the default 'esi' being used.
+#######################
+EVEONLINE_CHARACTER_PROVIDER = os.environ.get('AA_EVEONLINE_CHARACTER_PROVIDER', '')
+EVEONLINE_CORP_PROVIDER = os.environ.get('AA_EVEONLINE_CORP_PROVIDER', '')
+EVEONLINE_ALLIANCE_PROVIDER = os.environ.get('AA_EVEONLINE_ALLIANCE_PROVIDER', '')
+EVEONLINE_ITEMTYPE_PROVIDER = os.environ.get('AA_EVEONLINE_ITEMTYPE_PROVIDER', '')
+
 #####################
 # Alliance Market
 #####################
-MARKET_URL = os.environ.get('AA_MARKET_URL', 'http://yourdomain.com/market')
+MARKET_URL = os.environ.get('AA_MARKET_URL', 'http://example.com/market')
 MARKET_DB = {
     'ENGINE': 'django.db.backends.mysql',
     'NAME': 'alliance_market',
@@ -392,10 +407,16 @@ MARKET_DB = {
 #####################
 # HR Configuration
 #####################
-# JACK_KNIFE_URL - Url for the audit page of API Jack knife
-#                  Should seriously replace with your own.
+# API_KEY_AUDIT_URL - URL for viewing API keys.
+# Other URLs are supported. Use string formatting notation {} with parameter names api_id, vcode, pk
+# Example URL formats are shown below:
+#           Old Jacknife: 'https://example.com/jacknife/eveapi/audit.php?usid={api_id}&apik={vcode}'
+#           New Jacknife: 'https://example.com/jacknife/?usid={api_id}&apik={vcode}'
+#           SeAT: 'https://seat.example.com/api-key/detail/{api_id}'
+#           Django Admin: '/admin/eveonline/eveapikeypair/{pk}/change'
+# Leave blank for the verification code to be shown in a popup on click.
 #####################
-JACK_KNIFE_URL = os.environ.get('AA_JACK_KNIFE_URL', 'http://ridetheclown.com/eveapi/audit.php')
+API_KEY_AUDIT_URL = os.environ.get('AA_API_KEY_AUDIT_URL', '')
 
 #####################
 # Forum Configuration
@@ -404,14 +425,14 @@ JACK_KNIFE_URL = os.environ.get('AA_JACK_KNIFE_URL', 'http://ridetheclown.com/ev
 # IPBOARD_APIKEY - Api key to interact with ipboard
 # IPBOARD_APIMODULE - Module for alliance auth *leave alone*
 #####################
-IPBOARD_ENDPOINT = os.environ.get('AA_IPBOARD_ENDPOINT', 'yourdomain.com/interface/board/index.php')
+IPBOARD_ENDPOINT = os.environ.get('AA_IPBOARD_ENDPOINT', 'example.com/interface/board/index.php')
 IPBOARD_APIKEY = os.environ.get('AA_IPBOARD_APIKEY', 'somekeyhere')
 IPBOARD_APIMODULE = 'aa'
 
 ########################
 # XenForo Configuration
 ########################
-XENFORO_ENDPOINT = os.environ.get('AA_XENFORO_ENDPOINT', 'yourdomain.com/api.php')
+XENFORO_ENDPOINT = os.environ.get('AA_XENFORO_ENDPOINT', 'example.com/api.php')
 XENFORO_DEFAULT_GROUP = os.environ.get('AA_XENFORO_DEFAULT_GROUP', 0)
 XENFORO_APIKEY   = os.environ.get('AA_XENFORO_APIKEY', 'yourapikey')
 #####################
@@ -428,10 +449,10 @@ XENFORO_APIKEY   = os.environ.get('AA_XENFORO_APIKEY', 'yourapikey')
 # BROADCAST_USER - Broadcast user JID
 # BROADCAST_USER_PASSWORD - Broadcast user password
 ######################
-JABBER_URL = os.environ.get('AA_JABBER_URL', "yourdomain.com")
+JABBER_URL = os.environ.get('AA_JABBER_URL', "example.com")
 JABBER_PORT = int(os.environ.get('AA_JABBER_PORT', '5223'))
-JABBER_SERVER = os.environ.get('AA_JABBER_SERVER', "yourdomain.com")
-OPENFIRE_ADDRESS = os.environ.get('AA_OPENFIRE_ADDRESS', "http://yourdomain.com:9090")
+JABBER_SERVER = os.environ.get('AA_JABBER_SERVER', "example.com")
+OPENFIRE_ADDRESS = os.environ.get('AA_OPENFIRE_ADDRESS', "http://example.com:9090")
 OPENFIRE_SECRET_KEY = os.environ.get('AA_OPENFIRE_SECRET_KEY', "somekey")
 BROADCAST_USER = os.environ.get('AA_BROADCAST_USER', "broadcast@") + JABBER_URL
 BROADCAST_USER_PASSWORD = os.environ.get('AA_BROADCAST_USER_PASSWORD', "somepassword")
@@ -443,7 +464,7 @@ BROADCAST_SERVICE_NAME = os.environ.get('AA_BROADCAST_SERVICE_NAME', "broadcast"
 # MUMBLE_URL - Mumble server url
 # MUMBLE_SERVER_ID - Mumble server id
 ######################################
-MUMBLE_URL = os.environ.get('AA_MUMBLE_URL', "yourdomain.com")
+MUMBLE_URL = os.environ.get('AA_MUMBLE_URL', "example.com")
 MUMBLE_SERVER_ID = int(os.environ.get('AA_MUMBLE_SERVER_ID', '1'))
 
 ######################################
@@ -474,7 +495,7 @@ TEAMSPEAK3_SERVER_PORT = int(os.environ.get('AA_TEAMSPEAK3_SERVER_PORT', '10011'
 TEAMSPEAK3_SERVERQUERY_USER = os.environ.get('AA_TEAMSPEAK3_SERVERQUERY_USER', 'serveradmin')
 TEAMSPEAK3_SERVERQUERY_PASSWORD = os.environ.get('AA_TEAMSPEAK3_SERVERQUERY_PASSWORD', 'passwordhere')
 TEAMSPEAK3_VIRTUAL_SERVER = int(os.environ.get('AA_TEAMSPEAK3_VIRTUAL_SERVER', '1'))
-TEAMSPEAK3_PUBLIC_URL = os.environ.get('AA_TEAMSPEAK3_PUBLIC_URL', 'yourdomain.com')
+TEAMSPEAK3_PUBLIC_URL = os.environ.get('AA_TEAMSPEAK3_PUBLIC_URL', 'example.com')
 
 ######################################
 # Discord Configuration
@@ -492,7 +513,7 @@ DISCORD_BOT_TOKEN = os.environ.get('AA_DISCORD_BOT_TOKEN', '')
 DISCORD_INVITE_CODE = os.environ.get('AA_DISCORD_INVITE_CODE', '')
 DISCORD_APP_ID = os.environ.get('AA_DISCORD_APP_ID', '')
 DISCORD_APP_SECRET = os.environ.get('AA_DISCORD_APP_SECRET', '')
-DISCORD_CALLBACK_URL = os.environ.get('AA_DISCORD_CALLBACK_URL', 'http://mydomain.com/discord_callback')
+DISCORD_CALLBACK_URL = os.environ.get('AA_DISCORD_CALLBACK_URL', 'http://example.com/discord_callback')
 DISCORD_SYNC_NAMES = 'True' == os.environ.get('AA_DISCORD_SYNC_NAMES', 'False')
 
 ######################################
@@ -514,7 +535,7 @@ DISCOURSE_SSO_SECRET = os.environ.get('AA_DISCOURSE_SSO_SECRET', '')
 # IPS4_URL - base url of the IPS4 install (no trailing slash)
 # IPS4_API_KEY - API key provided by IPS4
 #####################################
-IPS4_URL = os.environ.get('AA_IPS4_URL', 'http://yourdomain.com/ips4')
+IPS4_URL = os.environ.get('AA_IPS4_URL', 'http://example.com/ips4')
 IPS4_API_KEY = os.environ.get('AA_IPS4_API_KEY', '')
 IPS4_DB = {
     'ENGINE': 'django.db.backends.mysql',
@@ -674,3 +695,7 @@ if ENABLE_AUTH_MARKET or ENABLE_BLUE_MARKET:
     DATABASES['market'] = MARKET_DB
 if ENABLE_AUTH_IPS4 or ENABLE_BLUE_IPS4:
     DATABASES['ips4'] = IPS4_DB
+
+# Ensure corp/alliance IDs are expected types
+STR_CORP_IDS = [str(id) for id in CORP_IDS]
+STR_ALLIANCE_IDS = [str(id) for id in ALLIANCE_IDS]
