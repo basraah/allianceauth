@@ -36,7 +36,7 @@ def discourse_sso(request):
 
     ## Check if user has access
 
-    auth, c = AuthServicesInfo.objects.get_or_create(user=request.user)
+    auth = AuthServicesInfo.objects.get(user=request.user)
     if not request.user.is_superuser:
         if not settings.ENABLE_AUTH_DISCOURSE and auth.state == MEMBER_STATE:
             messages.error(request, 'Members are not authorized to access Discourse.')

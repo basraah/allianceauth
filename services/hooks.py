@@ -82,7 +82,7 @@ class ServicesHook:
         return False
 
     def service_active_for_user(self, user):
-        state = AuthServicesInfo.objects.get_or_create(user=user)[0].state
+        state = AuthServicesInfo.objects.get(user=user).state
         return (
             (state == MEMBER_STATE and self.service_enabled_members()) or
             (state == BLUE_STATE and self.service_enabled_blues())

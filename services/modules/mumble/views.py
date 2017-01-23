@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 @members_and_blues()
 def activate_mumble(request):
     logger.debug("activate_mumble called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
+    authinfo = AuthServicesInfo.objects.get(user=request.user)
     character = EveManager.get_main_character(request.user)
     ticker = character.corporation_ticker
 

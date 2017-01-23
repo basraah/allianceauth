@@ -249,7 +249,7 @@ class EveManager(object):
         :param user: django.contrib.auth.models.User
         :return: EveCharacter
         """
-        authserviceinfo = AuthServicesInfo.objects.get_or_create(user=user)[0]
+        authserviceinfo = AuthServicesInfo.objects.get(user=user)
         return EveManager.get_character_by_id(authserviceinfo.main_char_id)
 
     @staticmethod

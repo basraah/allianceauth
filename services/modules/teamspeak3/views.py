@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 def activate_teamspeak3(request):
     logger.debug("activate_teamspeak3 called by user %s" % request.user)
 
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
+    authinfo = AuthServicesInfo.objects.get(user=request.user)
     character = EveManager.get_main_character(request.user)
     ticker = character.corporation_ticker
 
@@ -92,7 +92,7 @@ def reset_teamspeak3_perm(request):
     logger.debug("reset_teamspeak3_perm called by user %s" % request.user)
     if not Teamspeak3Tasks.has_account(request.user):
         return redirect("auth_services")
-    authinfo = AuthServicesInfo.objects.get_or_create(user=request.user)[0]
+    authinfo = AuthServicesInfo.objects.get(user=request.user)
     character = EveManager.get_main_character(request.user)
     logger.debug("Deleting TS3 user for user %s" % request.user)
     Teamspeak3Manager.delete_user(request.user.teamspeak3.uid)
