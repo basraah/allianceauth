@@ -5,4 +5,5 @@
 
     documentation
     integrating-services
+    menu-hooks
 ```
