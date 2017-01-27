@@ -4,4 +4,5 @@
 .. toctree::
 
     documentation
+    integrating-services
 ```
