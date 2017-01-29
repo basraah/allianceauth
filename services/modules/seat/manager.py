@@ -167,7 +167,7 @@ class SeatManager:
                     except ObjectDoesNotExist:
                         logger.debug("User does not have SeAT activated, could not assign key to user")
 
-        if bool(seat_all_keys) & (not user):
+        if bool(seat_all_keys) and not user and hasattr(settings, 'SEAT_PURGE_DELETED') and settings.SEAT_PURGE_DELETED:
             # remove from SeAT keys that were removed from Auth
             for key, key_user in iteritems(seat_all_keys):
                 # Remove the key only if it is an account or character key
