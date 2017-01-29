@@ -22,22 +22,7 @@ djcelery.setup_loader()
 # Celery configuration
 BROKER_URL = 'redis://localhost:6379/0'
 CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
-CELERYBEAT_SCHEDULE = {
-    """
-    Uncomment this if you are using the Teamspeak3 service
-    'run_ts3_group_update': {
-        'task': 'services.modules.teamspeak3.tasks.Teamspeak3Tasks.run_ts3_group_update',
-        'schedule': crontab(minute='*/30'),
-    },
-    """
-    """
-    Uncomment this if you are using the SeAT service
-    'run_seat_api_sync': {
-        'task': 'services.modules.seat.tasks.SeatTasks.run_api_sync',
-        'schedule': crontab(minute='*/30'),
-    },
-    """
-}
+CELERYBEAT_SCHEDULE = dict()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -164,6 +149,15 @@ DATABASES = {
         'PORT': os.environ.get('AA_DB_DEFAULT_PORT', '3306'),
     },
 }
+
+# If you have run the authentication.0013_service_modules migration
+# you will need to set this to True in order to install service modules
+# which were involved in that migration after it has been run.
+# If you are on a fresh install with no existing database you can safely
+# set this to True
+# If you have not run the authentication.0013_service_modules migration
+# leave this set to False.
+SERVICES_MIGRATED = False
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
@@ -476,7 +470,7 @@ BROADCAST_SERVICE_NAME = os.environ.get('AA_BROADCAST_SERVICE_NAME', "broadcast"
 # MUMBLE_URL - Mumble server url
 # MUMBLE_SERVER_ID - Mumble server id
 ######################################
-MUMBLE_URL = os.environ.get('AA_MUMBLE_URL', "example.com")
+MUMBLE_URL = os.environ.get('AA_MUMBLE_URL', "https://example.com")
 MUMBLE_SERVER_ID = int(os.environ.get('AA_MUMBLE_SERVER_ID', '1'))
 
 ######################################
@@ -525,7 +519,7 @@ DISCORD_BOT_TOKEN = os.environ.get('AA_DISCORD_BOT_TOKEN', '')
 DISCORD_INVITE_CODE = os.environ.get('AA_DISCORD_INVITE_CODE', '')
 DISCORD_APP_ID = os.environ.get('AA_DISCORD_APP_ID', '')
 DISCORD_APP_SECRET = os.environ.get('AA_DISCORD_APP_SECRET', '')
-DISCORD_CALLBACK_URL = os.environ.get('AA_DISCORD_CALLBACK_URL', 'http://example.com/discord_callback')
+DISCORD_CALLBACK_URL = os.environ.get('AA_DISCORD_CALLBACK_URL', 'http://example.com/discord/callback')
 DISCORD_SYNC_NAMES = 'True' == os.environ.get('AA_DISCORD_SYNC_NAMES', 'False')
 
 ######################################
@@ -570,7 +564,7 @@ SEAT_XTOKEN = os.environ.get('AA_SEAT_XTOKEN', '')
 ######################################
 # SMF Configuration
 ######################################
-SMF_URL = os.environ.get('AA_SMF_URL', '')
+SMF_URL = os.environ.get('AA_SMF_URL', 'https://example.com')
 SMF_DB = {
     'ENGINE': 'django.db.backends.mysql',
     'NAME': 'alliance_smf',
@@ -719,3 +713,15 @@ if ENABLE_AUTH_IPS4 or ENABLE_BLUE_IPS4:
 # Ensure corp/alliance IDs are expected types
 STR_CORP_IDS = [str(id) for id in CORP_IDS]
 STR_ALLIANCE_IDS = [str(id) for id in ALLIANCE_IDS]
+
+if 'services.modules.teamspeak3' in INSTALLED_APPS:
+    CELERYBEAT_SCHEDULE['run_ts3_group_update'] = {
+        'task': 'services.modules.teamspeak3.tasks.Teamspeak3Tasks.run_ts3_group_update',
+        'schedule': crontab(minute='*/30'),
+    }
+
+if 'services.modules.seat' in INSTALLED_APPS:
+    CELERYBEAT_SCHEDULE['run_seat_api_sync'] = {
+        'task': 'services.modules.seat.tasks.SeatTasks.run_api_sync',
+        'schedule': crontab(minute='*/30'),
+    }

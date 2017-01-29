@@ -1,4 +1,7 @@
 # Discourse
+
+Add `services.modules.discourse` to your `INSTALLED_APPS` list and run migrations before continuing with this guide to ensure the service is installed.
+
 ## Install Docker
 
     wget -qO- https://get.docker.io/ | sh
@@ -109,7 +112,7 @@ Scroll down to the Discourse section and set the following:
 
 Navigate to `discourse.example.com` and log in. Back to the admin site, scroll down to find SSO settings and set the following:
  - `enable_sso`: True
- - `sso_url`: `http://example.com/discourse_sso`
+ - `sso_url`: `http://example.com/discourse/sso`
  - `sso_secret`: some secure key
 
 Save, now change settings.py and add the following:

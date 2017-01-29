@@ -41,7 +41,7 @@ def activate_mumble(request):
 
     if result:
         logger.debug("Updated authserviceinfo for user %s with mumble credentials. Updating groups." % request.user)
-        MumbleTasks.update_groups.apply(request.user.pk)  # Run synchronously to prevent timing issues
+        MumbleTasks.update_groups.apply(args=(request.user.pk,))  # Run synchronously to prevent timing issues
         logger.info("Successfully activated mumble for user %s" % request.user)
         messages.success(request, 'Activated Mumble account.')
         credentials = {
@@ -105,7 +105,7 @@ def set_mumble_password(request):
             logger.debug("Form contains password of length %s" % len(password))
             result = MumbleManager.update_user_password(request.user, password=password)
             if result != "":
-                logger.info("Successfully reset forum password for user %s" % request.user)
+                logger.info("Successfully reset mumble password for user %s" % request.user)
                 messages.success(request, 'Set Mumble password.')
             else:
                 logger.error("Failed to install custom mumble password for user %s" % request.user)
