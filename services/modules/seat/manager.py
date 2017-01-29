@@ -150,14 +150,14 @@ class SeatManager:
                     logger.debug("Retrieving user name from Auth's SeAT users database")
                     try:
                         if keypar.user.seat.username:
-                            logger.debug("Retrieving user %s info from SeAT users database" % user.seat.username)
-                            userinfo = SeatManager.check_user_status(user.seat.username)
+                            logger.debug("Retrieving user %s info from SeAT users database" % keypar.user.seat.username)
+                            userinfo = SeatManager.check_user_status(keypar.user.seat.username)
                     except ObjectDoesNotExist:
                         pass
                 if userinfo:
                     # If the user has activated seat, assign the key to him.
                     logger.debug("Transferring Api Key with ID %s to user %s with ID %s " % (keypar.api_id,
-                                                                                             user.seat.username,
+                                                                                             keypar.user.seat.username,
                                                                                              userinfo['id']))
                     ret = SeatManager.exec_request('key/transfer/{}/{}'.format(keypar.api_id, userinfo['id']), 'get')
                     logger.debug(ret)
