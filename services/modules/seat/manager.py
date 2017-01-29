@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import os
 import requests
 from eveonline.managers import EveManager
@@ -28,7 +29,7 @@ class SeatManager:
     def exec_request(endpoint, func, **kwargs):
         """ Send an https api request """
         try:
-            endpoint = settings.SEAT_URL + '/api/v1/' + endpoint
+            endpoint = '{0}/api/v1/{1}'.format(settings.SEAT_URL, endpoint)
             headers = {'X-Token': settings.SEAT_XTOKEN, 'Accept': 'application/json'}
             logger.debug(headers)
             logger.debug(endpoint)
@@ -52,7 +53,7 @@ class SeatManager:
     @staticmethod
     def delete_user(username):
         """ Delete user """
-        ret = SeatManager.exec_request('user/' + username, 'delete')
+        ret = SeatManager.exec_request('user/{}'.format(username), 'delete')
         logger.debug(ret)
         logger.info("Deleted SeAT user with username %s" % username)
         return username
@@ -60,9 +61,9 @@ class SeatManager:
     @staticmethod
     def disable_user(username):
         """ Disable user """
-        ret = SeatManager.exec_request('user/' + username, 'put', active=0)
+        ret = SeatManager.exec_request('user/{}'.format(username), 'put', active=0)
         logger.debug(ret)
-        ret = SeatManager.exec_request('user/' + username, 'put', email="")
+        ret = SeatManager.exec_request('user/{}'.format(username), 'put', email="")
         logger.debug(ret)
         try:
             SeatManager.update_roles(username, [])
@@ -75,7 +76,7 @@ class SeatManager:
     @staticmethod
     def enable_user(username):
         """ Enable user """
-        ret = SeatManager.exec_request('user/' + username, 'put', active=1)
+        ret = SeatManager.exec_request('user/{}'.format(username), 'put', active=1)
         logger.debug(ret)
         logger.info("Enabled SeAT user with username %s" % username)
         return username
@@ -85,9 +86,9 @@ class SeatManager:
         """ Edit user info """
         logger.debug("Updating SeAT username %s with email %s and password hash starting with %s" % (username, email,
                                                                                                      password[0:5]))
-        ret = SeatManager.exec_request('user/' + username, 'put', email=email)
+        ret = SeatManager.exec_request('user/{}'.format(username), 'put', email=email)
         logger.debug(ret)
-        ret = SeatManager.exec_request('user/' + username, 'put', password=password)
+        ret = SeatManager.exec_request('user/{}'.format(username), 'put', password=password)
         logger.debug(ret)
         logger.info("Updated SeAT user with username %s" % username)
         return username
@@ -104,7 +105,7 @@ class SeatManager:
     def check_user_status(username):
         sanatized = str(SeatManager.__santatize_username(username))
         logger.debug("Checking SeAT status for user %s" % sanatized)
-        ret = SeatManager.exec_request('user/' + sanatized, 'get')
+        ret = SeatManager.exec_request('user/{}'.format(sanatized), 'get')
         logger.debug(ret)
         return ret
 
@@ -158,19 +159,19 @@ class SeatManager:
                     logger.debug("Transferring Api Key with ID %s to user %s with ID %s " % (keypar.api_id,
                                                                                              user.seat.username,
                                                                                              userinfo['id']))
-                    ret = SeatManager.exec_request('key/transfer/' + keypar.api_id + '/' + userinfo['id'], 'get')
+                    ret = SeatManager.exec_request('key/transfer/{}/{}'.format(keypar.api_id, userinfo['id']), 'get')
                     logger.debug(ret)
 
         if bool(seat_all_keys) & (not user):
             # remove from SeAT keys that were removed from Auth
             for key, key_user in iteritems(seat_all_keys):
                 # Remove the key only if it is an account or character key
-                ret = SeatManager.exec_request('key/'+key, 'get')
+                ret = SeatManager.exec_request('key/{}'.format(key), 'get')
                 logger.debug(ret)
                 try:
                     if (ret['info']['type'] == "Account") or (ret['info']['type'] == "Character"):
                         logger.debug("Removing api key %s from SeAT database" % key)
-                        ret = SeatManager.exec_request('key' + "/" + key, 'delete')
+                        ret = SeatManager.exec_request('key/{}'.format(key), 'delete')
                         logger.debug(ret)
                 except KeyError:
                     pass
@@ -190,19 +191,19 @@ class SeatManager:
         ret = SeatManager.exec_request('role/new', 'post', name=role)
         logger.debug(ret)
         logger.info("Added Seat group %s" % role)
-        role_info = SeatManager.exec_request('role/detail/' + role, 'get')
+        role_info = SeatManager.exec_request('role/detail/{}'.format(role), 'get')
         logger.debug(role_info)
         return role_info["id"]
 
     @staticmethod
     def add_role_to_user(user_id, role_id):
-        ret = SeatManager.exec_request('role/grant-user-role/' + user_id + "/" + role_id, 'get')
+        ret = SeatManager.exec_request('role/grant-user-role/{}/{}'.format(user_id, role_id), 'get')
         logger.info("Added role %s to user %s" % (role_id, user_id))
         return ret
 
     @staticmethod
     def revoke_role_from_user(user_id, role_id):
-        ret = SeatManager.exec_request('role/revoke-user-role/' + user_id + "/" + role_id, 'get')
+        ret = SeatManager.exec_request('role/revoke-user-role/{}/{}'.format(user_id, role_id), 'get')
         logger.info("Revoked role %s from user %s" % (role_id, user_id))
         return ret
 
