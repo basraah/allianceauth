@@ -36,7 +36,7 @@ class SeatManager:
             ret = getattr(requests, func)(endpoint, headers=headers, data=kwargs)
             return ret.json()
         except:
-            logger.debug("Error encountered while performing api request to SeAT")
+            logger.exception("Error encountered while performing API request to SeAT")
             return {}
 
     @staticmethod
@@ -155,12 +155,17 @@ class SeatManager:
                     except ObjectDoesNotExist:
                         pass
                 if userinfo:
-                    # If the user has activated seat, assign the key to him.
-                    logger.debug("Transferring Api Key with ID %s to user %s with ID %s " % (keypar.api_id,
-                                                                                             keypar.user.seat.username,
-                                                                                             userinfo['id']))
-                    ret = SeatManager.exec_request('key/transfer/{}/{}'.format(keypar.api_id, userinfo['id']), 'get')
-                    logger.debug(ret)
+                    try:
+                        # If the user has activated seat, assign the key to him.
+                        logger.debug("Transferring Api Key with ID %s to user %s with ID %s " % (
+                            keypar.api_id,
+                            keypar.user.seat.username,
+                            userinfo['id']))
+                        ret = SeatManager.exec_request('key/transfer/{}/{}'.format(keypar.api_id, userinfo['id']),
+                                                       'get')
+                        logger.debug(ret)
+                    except ObjectDoesNotExist:
+                        logger.debug("User does not have SeAT activated, could not assign key to user")
 
         if bool(seat_all_keys) & (not user):
             # remove from SeAT keys that were removed from Auth
