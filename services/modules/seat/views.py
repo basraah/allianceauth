@@ -46,7 +46,7 @@ def activate_seat(request):
         return render(request, 'registered/service_credentials.html',
                       context={'credentials': credentials, 'service': 'SeAT'})
     logger.error("Unsuccesful attempt to activate seat for user %s" % request.user)
-    redirect("auth_services")
+    return redirect("auth_services")
 
 
 @login_required
@@ -56,7 +56,7 @@ def deactivate_seat(request):
     # false we failed
     if SeatTasks.delete_user(request.user):
         logger.info("Successfully deactivated SeAT for user %s" % request.user)
-        redirect("auth_services")
+        return redirect("auth_services")
     else:
         logging.error("User does not have a SeAT account")
     logger.error("Unsuccessful attempt to activate SeAT for user %s" % request.user)
