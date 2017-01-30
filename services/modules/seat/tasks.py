@@ -32,7 +32,7 @@ class SeatTasks:
             user.seat.delete()
             logger.info("Successfully deactivated SeAT for user %s" % user)
             if notify_user:
-                notify(user, 'Alliance Market Account Disabled', level='danger')
+                notify(user, 'SeAT Account Disabled', level='danger')
             return True
         return False
 
