@@ -33,7 +33,7 @@ def activate_seat(request):
         password = SeatManager.update_user_password(username, request.user.email)
         result = [username, password]
     # if empty we failed
-    if result[0] != "":
+    if result[0] and result[1]:
         SeatUser.objects.update_or_create(user=request.user, defaults={'username': result[0]})
         logger.debug("Updated authserviceinfo for user %s with SeAT credentials.Adding eve-apis..." % request.user)
         SeatTasks.update_roles.delay(request.user.pk)
@@ -70,7 +70,7 @@ def reset_seat_password(request):
     if SeatTasks.has_account(request.user):
         result = SeatManager.update_user_password(request.user.seat.username, request.user.email)
         # false we failed
-        if result != "":
+        if result:
             credentials = {
                 'username': request.user.seat.username,
                 'password': result,
@@ -96,7 +96,7 @@ def set_seat_password(request):
             result = SeatManager.update_user_password(request.user.seat.username,
                                                       request.user.email,
                                                       plain_password=password)
-            if result != "":
+            if result:
                 logger.info("Succesfully reset SeAT password for user %s" % request.user)
                 return redirect("auth_services")
             else:

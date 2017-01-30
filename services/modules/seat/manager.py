@@ -16,6 +16,8 @@ class SeatManager:
     def __init__(self):
         pass
 
+    RESPONSE_OK = 'ok'
+
     @staticmethod
     def __santatize_username(username):
         sanatized = username.replace(" ", "_")
@@ -24,6 +26,10 @@ class SeatManager:
     @staticmethod
     def __generate_random_pass():
         return os.urandom(8).encode('hex')
+
+    @classmethod
+    def _response_ok(cls, response):
+        return cls.RESPONSE_OK in response
 
     @staticmethod
     def exec_request(endpoint, func, **kwargs):
@@ -34,62 +40,80 @@ class SeatManager:
             logger.debug(headers)
             logger.debug(endpoint)
             ret = getattr(requests, func)(endpoint, headers=headers, data=kwargs)
+            ret.raise_for_status()
             return ret.json()
         except:
-            logger.exception("Error encountered while performing API request to SeAT")
+            logger.exception("Error encountered while performing API request to SeAT with url {}".format(endpoint))
             return {}
 
-    @staticmethod
-    def add_user(username, email):
+    @classmethod
+    def add_user(cls, username, email):
         """ Add user to service """
         sanatized = str(SeatManager.__santatize_username(username))
         logger.debug("Adding user to SeAT with username %s" % sanatized)
         password = SeatManager.__generate_random_pass()
         ret = SeatManager.exec_request('user', 'post', username=sanatized, email=str(email), password=password)
         logger.debug(ret)
-        logger.info("Added SeAT user with username %s" % sanatized)
-        return sanatized, password
+        if cls._response_ok(ret):
+            logger.info("Added SeAT user with username %s" % sanatized)
+            return sanatized, password
+        logger.info("Failed to add SeAT user with username %s" % sanatized)
+        return None
 
-    @staticmethod
-    def delete_user(username):
+    @classmethod
+    def delete_user(cls, username):
         """ Delete user """
-        ret = SeatManager.exec_request('user/{}'.format(username), 'delete')
+        ret = cls.exec_request('user/{}'.format(username), 'delete')
         logger.debug(ret)
-        logger.info("Deleted SeAT user with username %s" % username)
-        return username
+        if cls._response_ok(ret):
+            logger.info("Deleted SeAT user with username %s" % username)
+            return username
+        return None
 
-    @staticmethod
-    def disable_user(username):
+    @classmethod
+    def disable_user(cls, username):
         """ Disable user """
-        ret = SeatManager.exec_request('user/{}'.format(username), 'put', active=0)
+        ret = cls.exec_request('user/{}'.format(username), 'put', active=0)
         logger.debug(ret)
-        ret = SeatManager.exec_request('user/{}'.format(username), 'put', email="")
+        ret = cls.exec_request('user/{}'.format(username), 'put', email="")
         logger.debug(ret)
-        try:
-            SeatManager.update_roles(username, [])
-            logger.info("Disabled SeAT user with username %s" % username)
-        except KeyError:
-            # if something goes wrong, delete user from seat instead of disabling
-            SeatManager.delete_user(username)
-        return username
+        if cls._response_ok(ret):
+            try:
+                cls.update_roles(username, [])
+                logger.info("Disabled SeAT user with username %s" % username)
+                return username
+            except KeyError:
+                # if something goes wrong, delete user from seat instead of disabling
+                if cls.delete_user(username):
+                    return username
+        logger.info("Failed to disabled SeAT user with username %s" % username)
+        return None
 
-    @staticmethod
-    def enable_user(username):
+    @classmethod
+    def enable_user(cls, username):
         """ Enable user """
         ret = SeatManager.exec_request('user/{}'.format(username), 'put', active=1)
         logger.debug(ret)
-        logger.info("Enabled SeAT user with username %s" % username)
-        return username
+        if cls._response_ok(ret):
+            logger.info("Enabled SeAT user with username %s" % username)
+            return username
+        logger.info("Failed to enabled SeAT user with username %s" % username)
+        return None
 
-    @staticmethod
-    def update_user(username, email, password):
+    @classmethod
+    def update_user(cls, username, email, password):
         """ Edit user info """
         logger.debug("Updating SeAT username %s with email %s and password hash starting with %s" % (username, email,
                                                                                                      password[0:5]))
         ret = SeatManager.exec_request('user/{}'.format(username), 'put', email=email)
         logger.debug(ret)
+        if not cls._response_ok(ret):
+            logger.warn("Failed to update email for username {}".format(username))
         ret = SeatManager.exec_request('user/{}'.format(username), 'put', password=password)
         logger.debug(ret)
+        if not cls._response_ok(ret):
+            logger.warn("Failed to update password for username {}".format(username))
+            return None
         logger.info("Updated SeAT user with username %s" % username)
         return username
 
@@ -98,8 +122,8 @@ class SeatManager:
         logger.debug("Settings new SeAT password for user %s" % username)
         if not plain_password:
             plain_password = SeatManager.__generate_random_pass()
-        SeatManager.update_user(username, email, plain_password)
-        return plain_password
+        if SeatManager.update_user(username, email, plain_password):
+            return plain_password
 
     @staticmethod
     def check_user_status(username):
