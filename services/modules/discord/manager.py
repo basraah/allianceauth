@@ -5,8 +5,11 @@ import re
 from django.conf import settings
 from services.models import GroupCache
 from requests_oauthlib import OAuth2Session
+from functools import wraps
 import logging
 import datetime
+import redis
+import time
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -29,6 +32,105 @@ SCOPES = [
 ]
 
 GROUP_CACHE_MAX_AGE = datetime.timedelta(minutes=30)
+
+
+class DiscordApiException(Exception):
+    def __init__(self):
+        super(Exception, self).__init__()
+
+
+class DiscordApiTooBusy(DiscordApiException):
+    def __init__(self):
+        super(DiscordApiException, self).__init__()
+        self.message = "The Discord API is too busy to process this request now, please try again later."
+
+
+class DiscordApiBackoff(DiscordApiException):
+    def __init__(self, retry_after):
+        super(DiscordApiException, self).__init__()
+        self.retry_after = retry_after
+
+
+
+def api_backoff(func):
+    """
+    Decorator, Handles HTTP 429 "Too Many Requests" messages from the Discord API
+    If blocking=True is specified, this function will block and retry
+    the function up to max_retries=n times, or 3 if retries is not specified.
+    If the API call still recieves a backoff timer this function will raise
+    a <DiscordApiTooBusy> exception.
+    If the caller chooses blocking=False, the decorator will raise a DiscordApiBackoff
+    exception and the caller can choose to retry after the given timespan available in
+    the retry_after property in seconds.
+    """
+
+    class PerformBackoff(Exception):
+        def __init__(self, retry_after, retry_datetime):
+            super(Exception, self).__init__()
+            self.retry_after = retry_after
+
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        blocking = True if 'blocking' in kwargs and kwargs['blocking'] == True else False
+        retries = kwargs['max_retries'] if 'max_retries' in kwargs else 3
+
+
+        # Strip our parameters
+        if 'max_retries' in kwargs:
+            del kwargs['max_retries']
+        if 'blocking' in kwargs:
+            del kwargs['blocking']
+
+        redis_key = 'DISCORD_BACKOFF'
+        redis_client = redis.Redis()
+        redis_format = '%Y-%m-%d %H:%M:%S'
+
+        while retries > 0:
+            try:
+                try:
+                    existing_backoff = redis_client.get(redis_key)
+                    if existing_backoff:
+                        backoff_timer = datetime.datetime.strptime(existing_backoff, redis_format)
+                        if backoff_timer > datetime.datetime.utcnow():
+                            backoff_seconds = (backoff_timer - datetime.datetime.utcnow()).total_seconds()
+                            logger.debug("Still under backoff for {} seconds, backing off" % backoff_seconds)
+                            # Still under backoff
+                            raise PerformBackoff(
+                                retry_after=backoff_seconds,
+                                retry_datetime=backoff_timer)
+                    logger.debug("Calling API calling function")
+                    func(*args, **kwargs)
+                    break
+                except requests.HTTPError as e:
+                    if e.response.status_code == 429:
+                        if 'Retry-After' in e.response.headers:
+                            retry_after = e.response.headers['Retry-After']
+                        else:
+                            # Pick some random time
+                            retry_after = 5
+
+                        logger.info("Received backoff from API of %s seconds, handling" % retry_after)
+                        # Store value in redis
+                        backoff_until = (datetime.datetime.utcnow() +
+                                         datetime.timedelta(seconds=int(retry_after)))
+                        redis_client.set(redis_key, backoff_until.strftime(redis_format))
+                        raise PerformBackoff(retry_after=retry_after, retry_datetime=backoff_until)
+                    else:
+                        # Not 429, re-raise
+                        raise e
+            except PerformBackoff as bo:
+                # Sleep if we're blocking
+                if blocking:
+                    logger.info("Blocking Back off from API calls for %s seconds" % bo.retry_after)
+                    time.sleep(10 if bo.retry_after > 10 else bo.retry_after)
+                else:
+                    # Otherwise raise exception and let caller handle the backoff
+                    raise DiscordApiBackoff(retry_after=bo.retry_after)
+            finally:
+                retries -= 1
+        if retries == 0:
+            raise DiscordApiTooBusy()
+    return decorated
 
 
 class DiscordOAuthManager:
@@ -191,6 +293,7 @@ class DiscordOAuthManager:
         DiscordOAuthManager.__update_group_cache()
 
     @staticmethod
+    @api_backoff
     def update_groups(user_id, groups):
         custom_headers = {'content-type': 'application/json', 'authorization': 'Bot ' + settings.DISCORD_BOT_TOKEN}
         group_ids = [DiscordOAuthManager.__group_name_to_id(DiscordOAuthManager._sanitize_groupname(g)) for g in groups]
@@ -199,3 +302,4 @@ class DiscordOAuthManager:
         r = requests.patch(path, headers=custom_headers, json=data)
         logger.debug("Received status code %s after setting user roles" % r.status_code)
         r.raise_for_status()
+
