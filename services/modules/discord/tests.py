@@ -20,6 +20,7 @@ from .tasks import DiscordTasks
 from .manager import DiscordOAuthManager
 
 import requests_mock
+import fakeredis
 
 MODULE_PATH = 'services.modules.discord'
 
@@ -344,13 +345,15 @@ class DiscordManagerTestCase(TestCase):
         # Assert
         self.assertTrue(result)
 
+    @mock.patch(MODULE_PATH + '.manager.redis')
     @mock.patch(MODULE_PATH + '.manager.DiscordOAuthManager._DiscordOAuthManager__get_group_cache')
     @requests_mock.Mocker()
-    def test_update_groups(self, group_cache, m):
+    def test_update_groups(self, group_cache, redis, m):
         from . import manager
         import json
 
         # Arrange
+        redis.Redis.return_value = fakeredis.FakeStrictRedis()
         groups = ['Member', 'Blue', 'Special Group']
 
         group_cache.return_value = [{'id': 111, 'name': 'Member'},
@@ -369,10 +372,37 @@ class DiscordManagerTestCase(TestCase):
         DiscordOAuthManager.update_groups(user_id, groups)
 
         # Assert
-        self.assertEqual(len(m.request_history), 1)
+        self.assertEqual(len(m.request_history), 1, 'Must be one HTTP call made')
         history = json.loads(m.request_history[0].text)
-        self.assertIn('roles', history)
-        self.assertIn(111, history['roles'])
-        self.assertIn(222, history['roles'])
-        self.assertIn(333, history['roles'])
-        self.assertNotIn(444, history['roles'])
+        self.assertIn('roles', history, "'The request must send JSON object with the 'roles' key")
+        self.assertIn(111, history['roles'], 'The group id 111 must be added to the request')
+        self.assertIn(222, history['roles'], 'The group id 222 must be added to the request')
+        self.assertIn(333, history['roles'], 'The group id 333 must be added to the request')
+        self.assertNotIn(444, history['roles'], 'The group id 444 must NOT be added to the request')
+
+    @mock.patch(MODULE_PATH + '.manager.redis')
+    @mock.patch(MODULE_PATH + '.manager.DiscordOAuthManager._DiscordOAuthManager__get_group_cache')
+    @requests_mock.Mocker()
+    def test_update_groups_backoff(self, group_cache, redis, m):
+        from . import manager
+
+        # Arrange
+        redis.Redis.return_value = fakeredis.FakeStrictRedis()
+
+        groups = ['Member']
+        group_cache.return_value = [{'id': 111, 'name': 'Member'}]
+
+        headers = {'content-type': 'application/json', 'authorization': 'Bot ' + settings.DISCORD_BOT_TOKEN}
+        user_id = 12345
+        request_url = '{}/guilds/{}/members/{}'.format(manager.DISCORD_URL, settings.DISCORD_GUILD_ID, user_id)
+
+        m.patch(request_url,
+                request_headers=headers,
+                headers={'Retry-After': '20'},
+                status_code=429)
+
+        # Act & Assert
+        with self.assertRaises(manager.DiscordApiBackoff) as bo:
+            DiscordOAuthManager.update_groups(user_id, groups, blocking=False)
+
+            self.assertEqual(bo.retry_after, 20, 'Retry-After time must be equal to Retry-After set in header')
