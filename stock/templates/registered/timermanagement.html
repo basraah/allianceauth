@@ -527,17 +527,6 @@
         }
 
         function updateClock() {
-            var options = {
-                timeZone: 'UTC',
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                hour: "numeric",
-                minute: "numeric",
-                second: "numeric"
-            };
-            var clock = new Date();
             document.getElementById("current-time").innerHTML = "<b>" + moment().format('LLLL') + "</b>";
         }
     </script>
