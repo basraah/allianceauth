@@ -430,30 +430,28 @@
         {% endif %}
     </div>
 
-
-    <script src="/static/js/dateformat.js"></script>
-    <script src="/static/js/countdown.js"></script>
+    {% include 'bundles/moment-js.html' with locale=True %}
     <script type="text/javascript">
         var locale = "{{ LANGUAGE_CODE }}";
-        var options = {weekday: 'short'};
-        var options2 = {hour: 'numeric', minute: 'numeric'};
 
         var timers = [
             {% for timer in timers %}
                 {
                     'id': {{ timer.id }},
-                    'targetDate': new Date(Date.UTC({{ timer.eve_time | date:"Y, m-1, d, H, i" }})),
+                    'targetDate': moment("{{ timer.eve_time | date:"c" }}"),
                     'expired': false
                 },
             {% endfor %}
             {% for timer in corp_timers %}
                 {
                     'id': {{ timer.id }},
-                    'targetDate': new Date(Date.UTC({{ timer.eve_time | date:"Y, m-1, d, H, i" }})),
+                    'targetDate': moment("{{ timer.eve_time | date:"c" }}"),
                     'expired': false
                 },
             {% endfor %}
         ];
+
+        moment.locale(locale);
 
         // Set initial values
         setAllLocalTimes();
@@ -483,12 +481,29 @@
          * @param timer.expired
          */
         function updateTimer(timer) {
-            if (timer.targetDate > Date.now()) {
-                document.getElementById("countdown" + timer.id).innerHTML = countdown(timer.targetDate).toString();
+            if (timer.targetDate.isAfter(Date.now())) {
+                duration = moment.duration(timer.targetDate - moment(), 'milliseconds');
+                document.getElementById("countdown" + timer.id).innerHTML = getDurationString(duration);
             } else {
                 timer.expired = true;
                 document.getElementById("countdown" + timer.id).innerHTML = "";
             }
+        }
+
+        /**
+        * Get a duration string like countdown.js
+        * e.g. "1y 2d 3h 4m 5s"
+        * @param duration moment.duration
+        */
+        function getDurationString(duration) {
+            let out = "";
+            if (duration.years()) {
+                out += duration.years() + 'y ';
+            }
+            if (duration.days()) {
+                out += duration.days() + 'd ';
+            }
+            return out + duration.hours() + "h " + duration.minutes() + "m " + duration.seconds() + "s";
         }
 
         /**
@@ -508,7 +523,7 @@
          * @param timer.id Id number of the timer
          */
         function setLocalTime(timer) {
-            document.getElementById("localtime" + timer.id).innerHTML = ((timer.targetDate.toLocaleString(locale, options)) + " @ " + (timer.targetDate.toLocaleString(locale, options2)));
+            document.getElementById("localtime" + timer.id).innerHTML = timer.targetDate.format("ddd @ LT");
         }
 
         function updateClock() {
@@ -523,7 +538,7 @@
                 second: "numeric"
             };
             var clock = new Date();
-            document.getElementById("current-time").innerHTML = "<b>" + clock.toLocaleString(locale, options) + "</b>";
+            document.getElementById("current-time").innerHTML = "<b>" + moment().format('LLLL') + "</b>";
         }
     </script>
 {% endblock content %}
