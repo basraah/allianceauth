@@ -18,6 +18,7 @@ class ServicesHook:
         self.name = 'Undefined'
         self.urlpatterns = []
         self.service_ctrl_template = 'registered/services_ctrl.html'
+        self.access_perm = None
 
     @property
     def title(self):
@@ -97,9 +98,7 @@ class ServicesHook:
         :param state: auth user state
         :return: bool True if the service should be shown
         """
-        return (self.service_enabled_members() and (
-            state == MEMBER_STATE or user.is_superuser)) or (
-                self.service_enabled_blues() and (state == BLUE_STATE or user.is_superuser))
+        return self.service_active_for_user(user) or user.is_superuser
 
     def render_services_ctrl(self, request):
         """
