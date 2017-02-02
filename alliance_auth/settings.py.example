@@ -292,7 +292,6 @@ BLUE_ALLIANCE_GROUPS = 'True' == os.environ.get('AA_BLUE_ALLIANCE_GROUPS', 'Fals
 # ENABLE_AUTH_DISCORD - Enable Discord support in the auth for auth'd members
 # ENABLE_AUTH_DISCOURSE - Enable Discourse support in the auth for auth'd members
 # ENABLE_AUTH_IPS4 - Enable IPS4 support in the auth for auth'd members
-# ENABLE_AUTH_SEAT = Enable SeAT support in the auth for auth'd members
 # ENABLE_AUTH_SMF - Enable SMF forum support in the auth for auth'd members
 # ENABLE_AUTH_MARKET = Enable Alliance Market support in auth for auth'd members
 # ENABLE_AUTH_XENFORO = Enable XenForo forums support in the auth for auth'd members
@@ -305,7 +304,6 @@ ENABLE_AUTH_TEAMSPEAK3 = 'True' == os.environ.get('AA_ENABLE_AUTH_TEAMSPEAK3', '
 ENABLE_AUTH_DISCORD = 'True' == os.environ.get('AA_ENABLE_AUTH_DISCORD', 'False')
 ENABLE_AUTH_DISCOURSE = 'True' == os.environ.get('AA_ENABLE_AUTH_DISCOURSE', 'False')
 ENABLE_AUTH_IPS4 = 'True' == os.environ.get('AA_ENABLE_AUTH_IPS4', 'False')
-ENABLE_AUTH_SEAT = 'True' == os.environ.get('AA_ENABLE_AUTH_SEAT', 'False')
 ENABLE_AUTH_SMF = 'True' == os.environ.get('AA_ENABLE_AUTH_SMF', 'False')
 ENABLE_AUTH_MARKET = 'True' == os.environ.get('AA_ENABLE_AUTH_MARKET', 'False')
 ENABLE_AUTH_XENFORO = 'True' == os.environ.get('AA_ENABLE_AUTH_XENFORO', 'False')
@@ -320,7 +318,6 @@ ENABLE_AUTH_XENFORO = 'True' == os.environ.get('AA_ENABLE_AUTH_XENFORO', 'False'
 # ENABLE_BLUE_DISCORD - Enable Discord support in the auth for blues
 # ENABLE_BLUE_DISCOURSE - Enable Discord support in the auth for blues
 # ENABLE_BLUE_IPS4 - Enable IPS4 forum support in the auth for blues
-# ENABLE_BLUE_SEAT = Enable SeAT support in the auth for blues
 # ENABLE_BLUE_SMF - Enable SMF forum support in the auth for blues
 # ENABLE_BLUE_MARKET - Enable Alliance Market in the auth for blues
 # ENABLE_BLUE_XENFORO = Enable XenForo forum support in the auth for blue 
@@ -333,7 +330,6 @@ ENABLE_BLUE_TEAMSPEAK3 = 'True' == os.environ.get('AA_ENABLE_BLUE_TEAMSPEAK3', '
 ENABLE_BLUE_DISCORD = 'True' == os.environ.get('AA_ENABLE_BLUE_DISCORD', 'False')
 ENABLE_BLUE_DISCOURSE = 'True' == os.environ.get('AA_ENABLE_BLUE_DISCOURSE', 'False')
 ENABLE_BLUE_IPS4 = 'True' == os.environ.get('AA_ENABLE_BLUE_IPS4', 'False')
-ENABLE_BLUE_SEAT = 'True' == os.environ.get('AA_ENABLE_BLUE_SEAT', 'False')
 ENABLE_BLUE_SMF = 'True' == os.environ.get('AA_ENABLE_BLUE_SMF', 'False')
 ENABLE_BLUE_MARKET = 'True' == os.environ.get('AA_ENABLE_BLUE_MARKET', 'False')
 ENABLE_BLUE_XENFORO = 'True' == os.environ.get('AA_ENABLE_BLUE_XENFORO', 'False')

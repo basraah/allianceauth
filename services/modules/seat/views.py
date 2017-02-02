@@ -1,10 +1,9 @@
-from django.template import RequestContext
-from django.shortcuts import render_to_response, render, redirect
-from django.contrib.auth.decorators import login_required
+from __future__ import unicode_literals
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required, permission_required
 
 from .manager import SeatManager
 
-from authentication.decorators import members_and_blues
 from eveonline.managers import EveManager
 
 from .tasks import SeatTasks
@@ -15,9 +14,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+ACCESS_PERM = 'seat.access_seat'
+
 
 @login_required
-@members_and_blues()
+@permission_required(ACCESS_PERM)
 def activate_seat(request):
     logger.debug("activate_seat called by user %s" % request.user)
     # Valid now we get the main characters
@@ -50,7 +51,7 @@ def activate_seat(request):
 
 
 @login_required
-@members_and_blues()
+@permission_required(ACCESS_PERM)
 def deactivate_seat(request):
     logger.debug("deactivate_seat called by user %s" % request.user)
     # false we failed
@@ -64,7 +65,7 @@ def deactivate_seat(request):
 
 
 @login_required
-@members_and_blues()
+@permission_required(ACCESS_PERM)
 def reset_seat_password(request):
     logger.debug("reset_seat_password called by user %s" % request.user)
     if SeatTasks.has_account(request.user):
@@ -83,7 +84,7 @@ def reset_seat_password(request):
 
 
 @login_required
-@members_and_blues()
+@permission_required(ACCESS_PERM)
 def set_seat_password(request):
     logger.debug("set_seat_password called by user %s" % request.user)
     if request.method == 'POST':

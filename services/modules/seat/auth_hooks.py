@@ -20,6 +20,7 @@ class SeatService(ServicesHook):
         self.urlpatterns = urlpatterns
         self.name = 'seat'
         self.service_url = settings.SEAT_URL
+        self.access_perm = 'seat.access_seat'
 
     @property
     def title(self):
@@ -43,11 +44,8 @@ class SeatService(ServicesHook):
         logger.debug('Update all %s groups called' % self.name)
         SeatTasks.update_all_roles.delay()
 
-    def service_enabled_members(self):
-        return settings.ENABLE_AUTH_SEAT or False
-
-    def service_enabled_blues(self):
-        return settings.ENABLE_BLUE_SEAT or False
+    def service_active_for_user(self, user):
+        return user.has_perm(self.access_perm)
 
     def render_services_ctrl(self, request):
         urls = self.Urls()

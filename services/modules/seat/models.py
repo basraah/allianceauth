@@ -14,3 +14,8 @@ class SeatUser(models.Model):
 
     def __str__(self):
         return self.username
+
+    class Meta:
+        permissions = (
+            ("access_seat", u"Can access the SeAT service"),
+        )
