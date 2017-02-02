@@ -10,7 +10,7 @@ except ImportError:
 from django.test import TestCase, RequestFactory
 from django.conf import settings
 from django import urls
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
 
 from alliance_auth.tests.auth_utils import AuthUtils
@@ -20,6 +20,12 @@ from .models import OpenfireUser
 from .tasks import OpenfireTasks
 
 MODULE_PATH = 'services.modules.openfire'
+
+
+def add_permissions():
+    permission = Permission.objects.get(codename='access_openfire')
+    Group.objects.get(name=settings.DEFAULT_AUTH_GROUP).permissions.add(permission)
+    Group.objects.get(name=settings.DEFAULT_BLUE_GROUP).permissions.add(permission)
 
 
 class OpenfireHooksTestCase(TestCase):
@@ -33,6 +39,7 @@ class OpenfireHooksTestCase(TestCase):
         self.none_user = 'none_user'
         none_user = AuthUtils.create_user(self.none_user)
         self.service = OpenfireService
+        add_permissions()
 
     def test_has_account(self):
         member = User.objects.get(username=self.member)
@@ -134,6 +141,7 @@ class OpenfireViewsTestCase(TestCase):
         self.member.email = 'auth_member@example.com'
         self.member.save()
         AuthUtils.add_main_character(self.member, 'auth_member', '12345', corp_id='111', corp_name='Test Corporation')
+        add_permissions()
 
     def login(self):
         self.client.login(username=self.member.username, password='password')
