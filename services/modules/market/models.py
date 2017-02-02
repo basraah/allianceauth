@@ -17,5 +17,5 @@ class MarketUser(models.Model):
 
     class Meta:
         permissions = (
-            ("activate_market", u"Can activate the Evernus Market service"),
+            ("access_market", u"Can access the Evernus Market service"),
         )

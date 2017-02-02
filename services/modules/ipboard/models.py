@@ -17,5 +17,5 @@ class IpboardUser(models.Model):
 
     class Meta:
         permissions = (
-            ("activate_ipboard", u"Can activate the IPBoard service"),
+            ("access_ipboard", u"Can access the IPBoard service"),
         )

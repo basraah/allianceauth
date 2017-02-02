@@ -16,5 +16,5 @@ class MumbleUser(models.Model):
 
     class Meta:
         permissions = (
-            ("activate_mumble", u"Can activate the Mumble service"),
+            ("access_mumble", u"Can access the Mumble service"),
         )

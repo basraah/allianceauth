@@ -16,5 +16,5 @@ class XenforoUser(models.Model):
 
     class Meta:
         permissions = (
-            ("activate_xenforo", u"Can activate the XenForo service"),
+            ("access_xenforo", u"Can access the XenForo service"),
         )

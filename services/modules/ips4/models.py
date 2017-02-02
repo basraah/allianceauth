@@ -18,5 +18,5 @@ class Ips4User(models.Model):
 
     class Meta:
         permissions = (
-            ("activate_ips4", u"Can activate the IPS4 service"),
+            ("access_ips4", u"Can access the IPS4 service"),
         )

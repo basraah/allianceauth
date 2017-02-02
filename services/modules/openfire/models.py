@@ -16,5 +16,5 @@ class OpenfireUser(models.Model):
 
     class Meta:
         permissions = (
-            ("activate_openfire", u"Can activate the Openfire service"),
+            ("access_openfire", u"Can access the Openfire service"),
         )

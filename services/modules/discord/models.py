@@ -17,5 +17,5 @@ class DiscordUser(models.Model):
 
     class Meta:
         permissions = (
-            ("activate_discord", u"Can activate the Discord service"),
+            ("access_discord", u"Can access the Discord service"),
         )

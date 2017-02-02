@@ -17,5 +17,5 @@ class DiscourseUser(models.Model):
 
     class Meta:
         permissions = (
-            ("activate_discourse", u"Can activate the Discourse service"),
+            ("access_discourse", u"Can access the Discourse service"),
         )
