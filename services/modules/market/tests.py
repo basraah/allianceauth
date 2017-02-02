@@ -47,11 +47,9 @@ class MarketHooksTestCase(TestCase):
         member = User.objects.get(username=self.member)
         blue = User.objects.get(username=self.blue)
         none_user = User.objects.get(username=self.none_user)
-        self.assertTrue(service.service_enabled_members())
-        self.assertTrue(service.service_enabled_blues())
 
-        self.assertEqual(service.service_active_for_user(member), settings.ENABLE_AUTH_MARKET)
-        self.assertEqual(service.service_active_for_user(blue), settings.ENABLE_BLUE_MARKET)
+        self.assertTrue(service.service_active_for_user(member))
+        self.assertTrue(service.service_active_for_user(blue))
         self.assertFalse(service.service_active_for_user(none_user))
 
     @mock.patch(MODULE_PATH + '.tasks.MarketManager')

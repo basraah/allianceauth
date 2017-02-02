@@ -46,8 +46,6 @@ class DiscordHooksTestCase(TestCase):
         member = User.objects.get(username=self.member)
         blue = User.objects.get(username=self.blue)
         none_user = User.objects.get(username=self.none_user)
-        self.assertTrue(service.service_enabled_members())
-        self.assertTrue(service.service_enabled_blues())
 
         self.assertTrue(service.service_active_for_user(member))
         self.assertTrue(service.service_active_for_user(blue))
