@@ -14,3 +14,8 @@ class MarketUser(models.Model):
 
     def __str__(self):
         return self.username
+
+    class Meta:
+        permissions = (
+            ("activate_market", u"Can activate the Evernus Market service"),
+        )

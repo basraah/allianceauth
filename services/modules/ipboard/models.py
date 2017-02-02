@@ -14,3 +14,8 @@ class IpboardUser(models.Model):
 
     def __str__(self):
         return self.username
+
+    class Meta:
+        permissions = (
+            ("activate_ipboard", u"Can activate the IPBoard service"),
+        )

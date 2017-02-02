@@ -13,3 +13,8 @@ class OpenfireUser(models.Model):
 
     def __str__(self):
         return self.username
+
+    class Meta:
+        permissions = (
+            ("activate_openfire", u"Can activate the Openfire service"),
+        )

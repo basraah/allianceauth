@@ -13,3 +13,8 @@ class Phpbb3User(models.Model):
 
     def __str__(self):
         return self.username
+
+    class Meta:
+        permissions = (
+            ("activate_phpbb3", u"Can activate the phpBB3 service"),
+        )
