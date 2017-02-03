@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
+from alliance_auth.hooks import get_hooks
 from authentication.states import MEMBER_STATE, BLUE_STATE
 from authentication.models import AuthServicesInfo
 
@@ -117,6 +118,11 @@ class ServicesHook:
             self.auth_set_password = ''
             self.auth_reset_password = ''
             self.auth_deactivate = ''
+
+    @staticmethod
+    def get_services():
+        for fn in get_hooks('services_hook'):
+            yield fn()
 
 
 class MenuItemHook:
