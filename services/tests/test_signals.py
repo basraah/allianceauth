@@ -26,8 +26,9 @@ class ServicesSignalsTestCase(TestCase):
         """
         svc = mock.Mock()
         svc.update_groups.return_value = None
+        svc.validate_user.return_value = None
 
-        services_hook.get_services.return_value = [lambda: [svc]]
+        services_hook.get_services.return_value = [svc]
 
         # Overload transaction.on_commit so everything happens synchronously
         transaction.on_commit = lambda fn: fn()
@@ -43,6 +44,10 @@ class ServicesSignalsTestCase(TestCase):
 
         self.assertTrue(svc.update_groups.called)
         args, kwargs = svc.update_groups.call_args
+        self.assertEqual(self.member, args[0])
+
+        self.assertTrue(svc.validate_user.called)
+        args, kwargs = svc.validate_user.call_args
         self.assertEqual(self.member, args[0])
 
     @mock.patch('services.signals.disable_member')

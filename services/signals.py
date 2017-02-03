@@ -25,6 +25,7 @@ def m2m_changed_user_groups(sender, instance, action, *args, **kwargs):
         # Iterate through Service hooks
         for svc in ServicesHook.get_services():
             try:
+                svc.validate_user(instance)
                 svc.update_groups(instance)
             except:
                 logger.exception('Exception running update_groups for services module %s on user %s' % (svc, instance))
