@@ -19,15 +19,15 @@ class ServicesSignalsTestCase(TestCase):
         self.none_user = AuthUtils.create_user('none_user', disconnect_signals=True)
 
     @mock.patch('services.signals.transaction')
-    @mock.patch('services.signals.get_hooks')
-    def test_m2m_changed_user_groups(self, get_hooks, transaction):
+    @mock.patch('services.signals.ServicesHook')
+    def test_m2m_changed_user_groups(self, services_hook, transaction):
         """
         Test that update_groups hook function is called on user groups change
         """
         svc = mock.Mock()
         svc.update_groups.return_value = None
 
-        get_hooks.return_value = [lambda: svc]
+        services_hook.get_services.return_value = [lambda: [svc]]
 
         # Overload transaction.on_commit so everything happens synchronously
         transaction.on_commit = lambda fn: fn()
@@ -39,9 +39,7 @@ class ServicesSignalsTestCase(TestCase):
         self.member.save()
 
         # Assert
-        self.assertTrue(get_hooks.called)
-        args, kwargs = get_hooks.call_args
-        self.assertEqual('services_hook', args[0])
+        self.assertTrue(services_hook.get_services.called)
 
         self.assertTrue(svc.update_groups.called)
         args, kwargs = svc.update_groups.call_args

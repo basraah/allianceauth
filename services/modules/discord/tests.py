@@ -23,8 +23,9 @@ MODULE_PATH = 'services.modules.discord'
 
 def add_permissions():
     permission = Permission.objects.get(codename='access_discord')
-    Group.objects.get(name=settings.DEFAULT_AUTH_GROUP).permissions.add(permission)
-    Group.objects.get(name=settings.DEFAULT_BLUE_GROUP).permissions.add(permission)
+    members = Group.objects.get(name=settings.DEFAULT_AUTH_GROUP)
+    blues = Group.objects.get(name=settings.DEFAULT_BLUE_GROUP)
+    AuthUtils.add_permissions_to_groups([permission], [members, blues])
 
 
 class DiscordHooksTestCase(TestCase):
