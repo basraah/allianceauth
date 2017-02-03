@@ -27,7 +27,7 @@ def disable_member(user):
     if user.groups.all().exists():
         logger.info("Clearing user %s groups to deactivate user." % user)
         user.groups.clear()
-    validate_services(user, None)
+    validate_services(user)
 
 
 def make_member(auth):
