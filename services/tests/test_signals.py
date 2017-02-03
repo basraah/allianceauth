@@ -113,9 +113,10 @@ class ServicesSignalsTestCase(TestCase):
 
         ct = ContentType.objects.get(app_label='auth', model='permission')
         perm = Permission.objects.create(name="Test perm", codename="access_testsvc", content_type=ct)
+        test_group.permissions.add(perm)
 
         # Act, should trigger m2m change
-        test_group.permissions.add(perm)
+        test_group.permissions.remove(perm)
 
         # Assert
         self.assertTrue(services_hook.get_services.called)
@@ -139,9 +140,10 @@ class ServicesSignalsTestCase(TestCase):
 
         ct = ContentType.objects.get(app_label='auth', model='permission')
         perm = Permission.objects.create(name="Test perm", codename="access_testsvc", content_type=ct)
+        self.member.user_permissions.add(perm)
 
         # Act, should trigger m2m change
-        self.member.user_permissions.add(perm)
+        self.member.user_permissions.remove(perm)
 
         # Assert
         self.assertTrue(services_hook.get_services.called)

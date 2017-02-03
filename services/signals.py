@@ -39,7 +39,7 @@ def m2m_changed_user_groups(sender, instance, action, *args, **kwargs):
 def m2m_changed_user_permissions(sender, instance, action, *args, **kwargs):
     logger.debug("Received m2m_changed from user %s permissions with action %s" % (instance, action))
     logger.debug('sender: %s' % sender)
-    if instance.pk and (action == "post_add" or action == "post_remove" or action == "post_clear"):
+    if instance.pk and (action == "post_remove" or action == "post_clear"):
         logger.debug("Permissions changed for user {}, re-validating services".format(instance))
         # Checking permissions for a single user is quite fast, so we don't need to validate
         # That the permissions is a service permission, unlike groups.
@@ -59,7 +59,7 @@ def m2m_changed_user_permissions(sender, instance, action, *args, **kwargs):
 @receiver(m2m_changed, sender=Group.permissions.through)
 def m2m_changed_group_permissions(sender, instance, action, pk_set, *args, **kwargs):
     logger.debug("Received m2m_changed from group %s permissions with action %s" % (instance, action))
-    if instance.pk and (action == "post_add" or action == "post_remove" or action == "post_clear"):
+    if instance.pk and (action == "post_remove" or action == "post_clear"):
         logger.debug("Checking if service permission changed for group {}".format(instance))
         # As validating an entire groups service could lead to many thousands of permission checks
         # first we check that one of the permissions changed is, in fact, a service permission.
