@@ -20,15 +20,11 @@ class ServicesTasksTestCase(TestCase):
         self.none_user = AuthUtils.create_user('none_user', disconnect_signals=True)
 
     @mock.patch('services.tasks.ServicesHook')
-    @mock.patch('services.tasks.deactivate_services')
-    def test_validate_services_valid_member(self, deactivate_services, services_hook):
-        """
-        Test that validate_services is called for a valid member
-        """
+    def test_validate_services(self, services_hook):
         svc = mock.Mock()
         svc.validate_user.return_value = None
 
-        services_hook.get_services.return_value = [lambda: [svc]]
+        services_hook.get_services.return_value = [svc]
 
         validate_services.delay(user=self.member)
 
@@ -36,4 +32,3 @@ class ServicesTasksTestCase(TestCase):
         self.assertTrue(svc.validate_user.called)
         args, kwargs = svc.validate_user.call_args
         self.assertEqual(self.member, args[0])  # Assert correct user is passed to service hook function
-        self.assertFalse(deactivate_services.called)

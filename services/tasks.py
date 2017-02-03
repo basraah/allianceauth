@@ -40,7 +40,7 @@ def only_one(function=None, key="", timeout=None):
 
 
 @app.task(bind=True)
-def validate_services(self, user, state):
+def validate_services(self, user):
     logger.debug('Ensuring user %s has permissions for active services'.format(user))
     # Iterate through services hooks and have them check the validity of the user
     for svc in ServicesHook.get_services():
