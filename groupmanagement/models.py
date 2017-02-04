@@ -69,6 +69,11 @@ class AuthGroup(models.Model):
     def __str__(self):
         return self.group.name
 
+    class Meta:
+        permissions = (
+            ("request_groups", u"Can request non-public groups"),
+        )
+
 
 @receiver(post_save, sender=Group)
 def create_auth_group(sender, instance, created, **kwargs):
