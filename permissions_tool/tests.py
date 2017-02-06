@@ -7,13 +7,13 @@ except ImportError:
     # Py2
     import mock
 
-from django.test import TestCase, RequestFactory
-from django.conf import settings
+from django.test import TestCase
 from django import urls
 from django.contrib.auth.models import User, Group, Permission
-from django.core.exceptions import ObjectDoesNotExist
 
 from alliance_auth.tests.auth_utils import AuthUtils
+
+import six
 
 
 class PermissionsToolViewsTestCase(TestCase):
@@ -51,8 +51,12 @@ class PermissionsToolViewsTestCase(TestCase):
 
         response = self.client.get(urls.reverse('permissions_overview'))
 
+        response_content = response.content
+        if six.PY3:
+            response_content = str(response_content, encoding='utf8')
+
         self.assertInHTML('<li><a class="active" href="/en/permissions/overview/"><i class="fa fa-key fa-id-card '
-                          'grayiconecolor"></i> Permissions Audit</a></li>', response.content)
+                          'grayiconecolor"></i> Permissions Audit</a></li>', response_content)
 
     def test_permissions_overview(self):
         self.client.login(username=self.member.username, password='password')
@@ -64,8 +68,17 @@ class PermissionsToolViewsTestCase(TestCase):
         self.assertContains(response, self.permission.codename)
         self.assertContains(response, self.permission.content_type.app_label)
         self.assertContains(response, self.permission.content_type.model)
-        self.assertInHTML('<td class="info text-right">3</td>', response.content)  # Should be 3 members in the group
-        self.assertInHTML('<td class="info text-right">1</td>', response.content)  # Should be 1 user
+
+        tested_context = False
+        # Test the context
+        for perm in response.context['permissions']:
+            if perm['permission'] == self.permission:
+                tested_context = True
+                self.assertDictContainsSubset({'users': 1}, perm)
+                self.assertDictContainsSubset({'groups': 1}, perm)
+                self.assertDictContainsSubset({'group_users': 3}, perm)
+                break
+        self.assertTrue(tested_context)
 
     def test_permissions_overview_perms(self):
         # Ensure permission effectively denys access
