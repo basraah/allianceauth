@@ -31,7 +31,7 @@ def disable_member(user):
         user.user_permissions.clear()
     if user.groups.all().exists():
         logger.info("Clearing all non-public user %s groups to disable member." % user)
-        user.groups.filter(authgroup__public=False).clear()
+        user.groups.remove(*user.groups.filter(authgroup__public=False))
     validate_services(user, None)
 
 
