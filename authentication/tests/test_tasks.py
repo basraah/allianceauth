@@ -23,7 +23,7 @@ class AuthenticationTasksTestCase(TestCase):
     @mock.patch('services.signals.transaction')
     def test_disable_member(self, transaction):
         # Inert signals action
-        transaction.on_commit = lambda fn: fn()
+        transaction.on_commit.side_effect = lambda fn: fn()
 
         # Add permission
         perm = Permission.objects.create(codename='test_perm', name='test perm', content_type_id=1)
@@ -55,7 +55,7 @@ class AuthenticationTasksTestCase(TestCase):
     @mock.patch('services.signals.transaction')
     def test_disable_user(self, transaction):
         # Inert signals action
-        transaction.on_commit = lambda fn: fn()
+        transaction.on_commit.side_effect = lambda fn: fn()
 
         # Add permission
         perm = Permission.objects.create(codename='test_perm', name='test perm', content_type_id=1)
