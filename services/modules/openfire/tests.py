@@ -205,3 +205,10 @@ class OpenfireManagerTestCase(TestCase):
 
         self.assertEqual(len(password), 16)
         self.assertIsInstance(password, type(''))
+
+    def test__sanitize_username(self):
+        test_username = "My_Test User\"'&/:<>@\u007F\uFFFE\uFFFFname"
+
+        result_username = self.manager._OpenfireManager__sanitize_username(test_username)
+
+        self.assertEqual(result_username, 'my_test_username')
