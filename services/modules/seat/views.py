@@ -36,9 +36,9 @@ def activate_seat(request):
     # if empty we failed
     if result[0] and result[1]:
         SeatUser.objects.update_or_create(user=request.user, defaults={'username': result[0]})
-        logger.debug("Updated authserviceinfo for user %s with SeAT credentials.Adding eve-apis..." % request.user)
+        logger.debug("Updated SeatUser for user %s with SeAT credentials. Adding eve-apis..." % request.user)
         SeatTasks.update_roles.delay(request.user.pk)
-        logger.info("Succesfully activated SeAT for user %s" % request.user)
+        logger.info("Successfully activated SeAT for user %s" % request.user)
         SeatManager.synchronize_eveapis(request.user)
         credentials = {
             'username': request.user.seat.username,
@@ -46,7 +46,7 @@ def activate_seat(request):
         }
         return render(request, 'registered/service_credentials.html',
                       context={'credentials': credentials, 'service': 'SeAT'})
-    logger.error("Unsuccesful attempt to activate seat for user %s" % request.user)
+    logger.error("Unsuccessful attempt to activate seat for user %s" % request.user)
     return redirect("auth_services")
 
 
