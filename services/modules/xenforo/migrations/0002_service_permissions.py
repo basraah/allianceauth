@@ -20,21 +20,27 @@ def migrate_service_enabled(apps, schema_editor):
 
     Group = apps.get_model("auth", "Group")
     Permission = apps.get_model("auth", "Permission")
+    XenforoUser = apps.get_model("xenforo", "XenforoUser")
 
     perm = Permission.objects.get(codename='access_xenforo')
 
+    member_group_name = getattr(settings, str('DEFAULT_AUTH_GROUP'), 'Member')
+    blue_group_name = getattr(settings, str('DEFAULT_BLUE_GROUP'), 'Blue')
+
     # Migrate members
-    if getattr(settings, str('ENABLE_AUTH_XENFORO'), False):
+    if XenforoUser.objects.filter(user__groups__name=member_group_name).exists() or \
+            getattr(settings, str('ENABLE_AUTH_XENFORO'), False):
         try:
-            group = Group.objects.get(name=getattr(settings, str('DEFAULT_AUTH_GROUP'), 'Member'))
+            group = Group.objects.get(name=member_group_name)
             group.permissions.add(perm)
         except ObjectDoesNotExist:
             logger.warning('Failed to migrate ENABLE_AUTH_XENFORO setting')
 
     # Migrate blues
-    if getattr(settings, str('ENABLE_BLUE_XENFORO'), False):
+    if XenforoUser.objects.filter(user__groups__name=blue_group_name).exists() or \
+            getattr(settings, str('ENABLE_BLUE_XENFORO'), False):
         try:
-            group = Group.objects.get(name=getattr(settings, str('DEFAULT_BLUE_GROUP'), 'Blue'))
+            group = Group.objects.get(name=blue_group_name)
             group.permissions.add(perm)
         except ObjectDoesNotExist:
             logger.warning('Failed to migrate ENABLE_BLUE_XENFORO setting')
