@@ -67,17 +67,10 @@ class SeatTasks:
 
     @staticmethod
     def deactivate():
-        if settings.ENABLE_AUTH_SEAT:
-            logger.warn("ENABLE_AUTH_SEAT still True, "
-                        "after disabling users will still be able to activate SeAT accounts")
-        if settings.ENABLE_BLUE_SEAT:
-            logger.warn("ENABLE_BLUE_SEAT still True, "
-                        "after disabling blues will still be able to activate SeAT accounts")
         SeatUser.objects.all().delete()
 
     @staticmethod
     @app.task
     def run_api_sync():
-        if settings.ENABLE_AUTH_SEAT or settings.ENABLE_BLUE_SEAT:
-            logger.debug("Running eveapi synchronization with SeAT")
-            SeatManager.synchronize_eveapis()
+        logger.debug("Running EVE API synchronization with SeAT")
+        SeatManager.synchronize_eveapis()
