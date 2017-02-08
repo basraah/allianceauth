@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
-import os
+import random
+import string
 import requests
 from eveonline.managers import EveManager
 from django.conf import settings
@@ -25,7 +26,7 @@ class SeatManager:
 
     @staticmethod
     def __generate_random_pass():
-        return os.urandom(8).encode('hex')
+        return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(16)])
 
     @classmethod
     def _response_ok(cls, response):
