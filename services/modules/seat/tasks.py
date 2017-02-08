@@ -36,13 +36,13 @@ class SeatTasks:
             return True
         return False
 
-    @classmethod
-    @app.task
-    def update_roles(cls, self, pk):
+    @staticmethod
+    @app.task(bind=True)
+    def update_roles(self, pk):
         user = User.objects.get(pk=pk)
         logger.debug("Updating SeAT roles for user %s" % user)
         groups = []
-        if cls.has_account(user):
+        if SeatTasks.has_account(user):
             for group in user.groups.all():
                 groups.append(str(group.name))
             if len(groups) == 0:
@@ -58,12 +58,12 @@ class SeatTasks:
         else:
             logger.debug("User %s does not have a SeAT account")
 
-    @classmethod
+    @staticmethod
     @app.task
-    def update_all_roles(cls):
+    def update_all_roles():
         logger.debug("Updating ALL SeAT roles")
-        for user in SeatUser.objects.exclude(seat_username__exact=''):
-                cls.update_roles.delay(user.user_id)
+        for user in SeatUser.objects.all():
+            SeatTasks.update_roles.delay(user.user_id)
 
     @staticmethod
     def deactivate():
