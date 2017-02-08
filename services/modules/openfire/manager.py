@@ -38,23 +38,24 @@ class OpenfireManager:
 
     @staticmethod
     def __sanitize_username(username):
-        # https://xmpp.org/extensions/xep-0029.html#sect-idp625072
+        # https://xmpp.org/extensions/xep-0106.html#escaping
         replace = [
-            ("\"", ""),
-            ("&", ""),
-            ("'", ""),
-            ("/", ""),
-            (":", ""),
-            ("<", ""),
-            (">", ""),
-            ("@", ""),
+            ("\\", "\\5c"),  # Escape backslashes first to double escape existing escape sequences
+            ("\"", "\\22"),
+            ("&", "\\26"),
+            ("'", "\\27"),
+            ("/", "\\2f"),
+            (":", "\\3a"),
+            ("<", "\\3c"),
+            (">", "\\3e"),
+            ("@", "\\40"),
             ("\u007F", ""),
             ("\uFFFE", ""),
             ("\uFFFF", ""),
-            (" ", "_"),  # Catch spaces last in case its introduced elsewhere
+            (" ", "\\20"),
         ]
 
-        sanitized = username.lower()
+        sanitized = username.strip(' ')
 
         for find, rep in replace:
             sanitized = sanitized.replace(find, rep)
