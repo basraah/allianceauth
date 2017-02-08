@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'services.modules.ips4',
     'services.modules.market',
     'services.modules.openfire',
+    'services.modules.seat',
     'services.modules.smf',
     'services.modules.phpbb3',
     'services.modules.xenforo',
@@ -141,7 +142,7 @@ SUPERUSER_STATE_BYPASS = 'True' == os.environ.get('AA_SUPERUSER_STATE_BYPASS', '
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 
-LANGUAGE_CODE = os.environ.get('AA_LANGUAGE_CODE', 'en-us')
+LANGUAGE_CODE = os.environ.get('AA_LANGUAGE_CODE', 'en')
 
 TIME_ZONE = os.environ.get('AA_TIME_ZONE', 'UTC')
 
@@ -485,6 +486,14 @@ DISCOURSE_SSO_SECRET = 'd836444a9e4084d5b224a60c208dce14'
 IPS4_URL = os.environ.get('AA_IPS4_URL', 'http://example.com/ips4')
 IPS4_API_KEY = os.environ.get('AA_IPS4_API_KEY', '')
 
+#####################################
+# SEAT Configuration
+#####################################
+# SEAT_URL - base url of the seat install (no trailing slash)
+# SEAT_XTOKEN - API key X-Token provided by SeAT
+#####################################
+SEAT_URL = os.environ.get('AA_SEAT_URL', 'http://example.com/seat')
+SEAT_XTOKEN = os.environ.get('AA_SEAT_XTOKEN', 'tokentokentoken')
 
 ######################################
 # SMF Configuration
