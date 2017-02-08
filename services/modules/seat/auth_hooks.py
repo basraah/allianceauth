@@ -32,7 +32,7 @@ class SeatService(ServicesHook):
 
     def validate_user(self, user):
         logger.debug('Validating user %s %s account' % (user, self.name))
-        if SeatTasks.has_account(user) and self.service_active_for_user(user):
+        if SeatTasks.has_account(user) and not self.service_active_for_user(user):
             self.delete_user(user)
 
     def update_groups(self, user):
