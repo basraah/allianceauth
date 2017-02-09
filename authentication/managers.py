@@ -19,7 +19,7 @@ class AuthServicesInfoManager:
             logger.debug("Updating user %s main character to id %s" % (user, char_id))
             authserviceinfo = AuthServicesInfo.objects.get(user=user)
             authserviceinfo.main_char_id = char_id
-            authserviceinfo.save(update_fields=['main_char_id'])
+            authserviceinfo.save()
             logger.info("Updated user %s main character to id %s" % (user, char_id))
         else:
             logger.error("Failed to update user %s main character id to %s: user does not exist." % (user, char_id))
