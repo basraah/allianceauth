@@ -24,11 +24,16 @@ class AuthServicesInfo(models.Model):
     # Faux main_char_id properties for backwards compatibility
     @property
     def main_char_id(self):
-        return self.main_character.character_id
+        if self.main_character:
+            return self.main_character.character_id
+        return None
 
     @main_char_id.setter
     def main_char_id(self, char_id):
-        self.main_character = EveCharacter.objects.get(character_id=char_id)
+        if char_id is None:
+            self.main_character = None
+        else:
+            self.main_character = EveCharacter.objects.get(character_id=char_id)
 
     def __str__(self):
         return self.user.username + ' - AuthInfo'
