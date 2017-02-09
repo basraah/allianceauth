@@ -16,13 +16,13 @@ def forward(apps, schema_editor):
 
     for authinfo in AuthServicesInfo.objects.all():
         try:
-            if authinfo.main_char_id:
-                eve_char = EveCharacter.objects.get(character_id=authinfo.main_char_id)
+            if authinfo._main_char_id:
+                eve_char = EveCharacter.objects.get(character_id=authinfo._main_char_id)
                 authinfo.main_character = eve_char
                 authinfo.save()
         except ObjectDoesNotExist:
             logger.warn("Failed to migrate main_char_id for user {} - main_char_id {}".format(authinfo.user.username,
-                                                                                              authinfo.main_char_id))
+                                                                                              authinfo._main_char_id))
 
 
 def reverse(apps, schema_editor):
@@ -31,7 +31,7 @@ def reverse(apps, schema_editor):
     for authinfo in AuthServicesInfo.objects.all():
         try:
             if authinfo.main_character:
-                authinfo.main_char_id = authinfo.main_character.character_id
+                authinfo._main_char_id = authinfo.main_character.character_id
                 authinfo.save()
         except ObjectDoesNotExist:
             logger.warn("Failed to migrate main_char_id for user {} - main_character.character_id {}".format(
@@ -46,6 +46,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RenameField(
+            model_name='authservicesinfo',
+            old_name='main_char_id',
+            new_name='_main_char_id',
+        ),
         migrations.AddField(
             model_name='authservicesinfo',
             name='main_character',
@@ -60,6 +65,6 @@ class Migration(migrations.Migration):
         migrations.RunPython(forward, reverse),
         migrations.RemoveField(
             model_name='authservicesinfo',
-            name='main_char_id',
+            name='_main_char_id',
         ),
     ]
