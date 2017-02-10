@@ -69,26 +69,8 @@ class ServicesHook:
         """
         pass
 
-    def service_enabled_members(self):
-        """
-        Return setting config for service enabled for members
-        :return: bool True if enabled
-        """
-        return False
-
-    def service_enabled_blues(self):
-        """
-        Return setting config for service enabled for Blues
-        :return: bool True if enabled
-        """
-        return False
-
     def service_active_for_user(self, user):
-        state = AuthServicesInfo.objects.get(user=user).state
-        return (
-            (state == MEMBER_STATE and self.service_enabled_members()) or
-            (state == BLUE_STATE and self.service_enabled_blues())
-        )
+        pass
 
     def show_service_ctrl(self, user, state):
         """
