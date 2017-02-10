@@ -72,6 +72,22 @@ class MarketHooksTestCase(TestCase):
         with self.assertRaises(ObjectDoesNotExist):
             market_user = User.objects.get(username=self.member).market
 
+    @mock.patch(MODULE_PATH + '.tasks.MarketManager')
+    def test_validate_user(self, manager):
+        service = self.service()
+        # Test member is not deleted
+        member = User.objects.get(username=self.member)
+        service.validate_user(member)
+        self.assertTrue(User.objects.get(username=self.member).market)
+
+        # Test none user is deleted
+        none_user = User.objects.get(username=self.none_user)
+        MarketUser.objects.create(user=none_user, username='abc123')
+        service.validate_user(none_user)
+        self.assertTrue(manager.disable_user.called)
+        with self.assertRaises(ObjectDoesNotExist):
+            none_svc = User.objects.get(username=self.none_user).market
+
     def test_render_services_ctrl(self):
         service = self.service()
         member = User.objects.get(username=self.member)
