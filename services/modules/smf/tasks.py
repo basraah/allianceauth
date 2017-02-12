@@ -41,7 +41,7 @@ class SmfTasks:
         SmfUser.objects.all().delete()
 
     @staticmethod
-    @app.task(bind=True)
+    @app.task(bind=True, name="smf.update_groups")
     def update_groups(self, pk):
         user = User.objects.get(pk=pk)
         logger.debug("Updating smf groups for user %s" % user)
@@ -62,7 +62,7 @@ class SmfTasks:
             logger.debug("User does not have an smf account")
 
     @staticmethod
-    @app.task
+    @app.task(name="smf.update_all_groups")
     def update_all_groups():
         logger.debug("Updating ALL smf groups")
         for user in SmfUser.objects.exclude(username__exact=''):
