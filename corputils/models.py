@@ -41,10 +41,12 @@ class CorpStats(models.Model):
 
     def update(self):
         try:
-            c = self.token.get_esi_client()
-            assert c.Character.get_characters_character_id(character_id=self.token.character_id).result()[
+            cv1 = self.token.get_esi_client(version='v1')
+            cv2 = self.token.get_esi_client(version='v2')
+            cv4 = self.token.get_esi_client(version='v4')
+            assert cv4.Character.get_characters_character_id(character_id=self.token.character_id).result()[
                        'corporation_id'] == int(self.corp.corporation_id)
-            members = c.Corporation.get_corporations_corporation_id_members(
+            members = cv2.Corporation.get_corporations_corporation_id_members(
                 corporation_id=self.corp.corporation_id).result()
             member_ids = [m['character_id'] for m in members]
 
@@ -52,7 +54,7 @@ class CorpStats(models.Model):
             # the swagger spec doesn't have a maxItems count
             # manual testing says we can do over 350, but let's not risk it
             member_id_chunks = [member_ids[i:i + 255] for i in range(0, len(member_ids), 255)]
-            member_name_chunks = [c.Character.get_characters_names(character_ids=id_chunk).result() for id_chunk in
+            member_name_chunks = [cv1.Character.get_characters_names(character_ids=id_chunk).result() for id_chunk in
                                   member_id_chunks]
             member_list = {}
             for name_chunk in member_name_chunks:

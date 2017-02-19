@@ -206,19 +206,21 @@ def click_fatlink_view(request, token, hash, fatname):
 
             if character:
                 # get data
-                c = token.get_esi_client()
-                location = c.Location.get_characters_character_id_location(character_id=token.character_id).result()
-                ship = c.Location.get_characters_character_id_ship(character_id=token.character_id).result()
+                cv1 = token.get_esi_client(version='v1')
+                cv2 = token.get_esi_client(version='v2')
+                location = cv1.Location.get_characters_character_id_location(character_id=token.character_id).result()
+                ship = cv1.Location.get_characters_character_id_ship(character_id=token.character_id).result()
                 location['solar_system_name'] = \
-                    c.Universe.get_universe_systems_system_id(system_id=location['solar_system_id']).result()[
+                    cv2.Universe.get_universe_systems_system_id(system_id=location['solar_system_id']).result()[
                         'name']
                 if location['structure_id']:
                     location['station_name'] = \
-                        c.Universe.get_universe_structures_structure_id(structure_id=location['structure_id']).result()[
-                            'name']
+                        cv1.Universe.get_universe_structures_structure_id(structure_id=location['structure_id'])\
+                        .result()['name']
                 elif location['station_id']:
                     location['station_name'] = \
-                        c.Universe.get_universe_stations_station_id(station_id=location['station_id']).result()['name']
+                        cv2.Universe.get_universe_stations_station_id(station_id=location['station_id'])\
+                        .result()['name']
                 else:
                     location['station_name'] = "No Station"
                 ship['ship_type_name'] = EveManager.get_itemtype(ship['ship_type_id']).name
