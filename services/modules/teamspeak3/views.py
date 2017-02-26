@@ -82,8 +82,9 @@ def deactivate_teamspeak3(request):
     if Teamspeak3Tasks.has_account(request.user) and Teamspeak3Tasks.delete_user(request.user):
         logger.info("Successfully deactivated TS3 for user %s" % request.user)
         messages.success(request, 'Deactivated TeamSpeak3 account.')
-    logger.error("Unsuccessful attempt to deactivate TS3 for user %s" % request.user)
-    messages.error(request, 'An error occurred while processing your TeamSpeak3 account.')
+    else:
+        logger.error("Unsuccessful attempt to deactivate TS3 for user %s" % request.user)
+        messages.error(request, 'An error occurred while processing your TeamSpeak3 account.')
     return redirect("auth_services")
 
 
