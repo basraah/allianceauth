@@ -49,7 +49,7 @@ What address are you going to use to reference it? By default, without a bind pa
  
 For UNIX sockets add `--bind=unix:/run/allianceauth.sock` (or to a path you wish to use). Remember that your web server will need to be able to access this socket file.
  
-For a TCP address add `--bind=127.0.0.1:8001` (or to the address/port you wish to use, but I would strongly advise against binding it to an external port).
+For a TCP address add `--bind=127.0.0.1:8001` (or to the address/port you wish to use, but I would strongly advise against binding it to an external address).
  
 Whatever you decide to use, remember it because we'll need it when configuring your webserver.
 
@@ -75,13 +75,17 @@ To your server config add:
 
 ```
 location / {
-    proxy_pass http://127.0.0.1:8000;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_pass              http://127.0.0.1:8000;
+    proxy_read_timeout      90;
+    proxy_redirect          http://127.0.0.1:8000/ http://$host/;
+    proxy_set_header        Host $host;
+    proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header        X-Real-IP $remote_addr;
+    proxy_set_header        X-Forwarded-Proto $scheme;
 }
 ```
 
-Set `proxy_pass` to the address you set under `--bind=`. Tell NGINX to reload your config, job done. Enjoy your lower memory usage and better performance!
+Set `proxy_pass` and `proxy_redirect` to the address you set under `--bind=`. Set the second part of `proxy_redirect` to the URL you're hosting services on. Tell NGINX to reload your config, job done. Enjoy your lower memory usage and better performance!
 
 If PHP is stopping you moving to NGINX, check out php-fpm as a way to run your PHP applications.
 
