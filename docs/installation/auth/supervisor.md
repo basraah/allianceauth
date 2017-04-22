@@ -20,7 +20,7 @@ CentOS:
 
 ## Configuration
 
-Auth provides example config files for the celery workers (celeryd), the periodic task scheduler (celerybeat), and the mumble authenticator. All of these are available in `thirdparty/Supervisor`.
+Auth provides example config files for the celery workers, the periodic task scheduler (celery beat), and the mumble authenticator. All of these are available in `thirdparty/Supervisor`.
 
 For most users, all you have to do is copy the config files to `/etc/supervisor/conf.d` then restart the service. Copy `auth-celerybeat.conf` and `auth-celeryd.conf` for the celery workers, and `auth-mumble.conf` for the mumble authenticator. For all three just use a wildcard:
 
@@ -41,8 +41,8 @@ To ensure the processes are working, check their status:
     sudo supervisorctl status
 
 Processes will be `STARTING`, `RUNNING`, or `ERROR`. If an error has occurred, check their log files:
- - celeryd: `log/worker.log`
- - celerybeat: `log/beat.log`
+ - celery workers: `log/worker.log`
+ - celery beat: `log/beat.log`
  - authenticator: `log/authenticator.log`
 
 ## Customizing Config Files
