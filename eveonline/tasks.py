@@ -75,7 +75,7 @@ def refresh_user_apis(user):
     logger.debug('Refreshing all APIs belonging to user %s' % user)
     apis = EveApiKeyPair.objects.filter(user=user)
     for x in apis:
-        refresh_api(x)
+        refresh_api.apply(args=(x,))
     # Check our main character
     auth = AuthServicesInfo.objects.get(user=user)
     if auth.main_char_id:
@@ -123,7 +123,7 @@ def run_corp_update():
         is_blue = True if corp_id in settings.STR_BLUE_CORP_IDS else False
         try:
             if EveCorporationInfo.objects.filter(corporation_id=corp_id).exists():
-                update_corp(corp_id, is_blue=is_blue)
+                update_corp.apply(args=(corp_id,), kwargs={'is_blue': is_blue})
             else:
                 EveManager.create_corporation(corp_id, is_blue=is_blue)
         except ObjectNotFound:
