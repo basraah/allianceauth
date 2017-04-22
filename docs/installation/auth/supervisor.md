@@ -49,7 +49,7 @@ Processes will be `STARTING`, `RUNNING`, or `ERROR`. If an error has occurred, c
 
 The only real customization needed is if running in a virtual environment. The python path will have to be changed in order to start in the venv.
 
-Edit the config files and find the line saying `command`. Replace `python` with `/path/to/venv/python`. This can be relative to the `directory` specified in the config file.
+Edit the config files and find the line saying `command`. Replace `python` with `/path/to/venv/bin/python`. For Celery replace `celery` with `/path/to/venv/bin/celery`. This can be relative to the `directory` specified in the config file.
 
 Note that for config changes to be loaded, the supervisor service must be restarted.
 
