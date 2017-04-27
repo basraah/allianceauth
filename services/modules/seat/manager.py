@@ -108,8 +108,7 @@ class SeatManager:
     @classmethod
     def update_user(cls, username, email, password):
         """ Edit user info """
-        logger.debug("Updating SeAT username %s with email %s and password hash starting with %s" % (username, email,
-                                                                                                     password[0:5]))
+        logger.debug("Updating SeAT username %s with email %s and password" % (username, email))
         ret = cls.exec_request('user/{}'.format(username), 'put', email=email)
         logger.debug(ret)
         if not cls._response_ok(ret):
