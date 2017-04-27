@@ -2,7 +2,7 @@
 
 ## Overivew
 
-Nginx (engine x) high-performance HTTP server and reverse proxy and is known for its high performance, stability, simple configuration, and low resource consumption. Unlike traditional servers (i.e. Apache), Nginx doesn't rely on threads to serve requests, rather using an asynchronous event driven approach which permits predictable resource usage and performance under load.
+Nginx (engine x) is a HTTP server known for its high performance, stability, simple configuration, and low resource consumption. Unlike traditional servers (i.e. Apache), Nginx doesn't rely on threads to serve requests, rather using an asynchronous event driven approach which permits predictable resource usage and performance under load.
 
 If you're trying to cram Alliance Auth into a very small VPS of say, 1-2GB or less, then Nginx will be considerably friendlier to your resources compared to Apache.
 
