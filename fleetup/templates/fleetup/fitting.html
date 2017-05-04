@@ -33,8 +33,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-8 col-lg-offset-7">
-                            <a class="btn btn-primary" href="/fleetup/doctrines/{{ doctrin.DoctrineId }}/">{% trans "See doctrine" %}</a>
+                        <div class="pull-right">
+                            <a class="btn btn-primary" href="{% url 'auth_fleetup_doctrine' doctrin.DoctrineId %}">{% trans "See doctrine" %}</a>
                         </div>
                         {% endfor %}
                     </div>
