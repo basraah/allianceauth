@@ -38,7 +38,7 @@ def fleetup_view(request):
                "operations_list": sorted(operations_list.items()),
                "now": now}
 
-    return render(request, 'registered/fleetup.html', context=context)
+    return render(request, 'fleetup/index.html', context=context)
 
 
 @login_required
@@ -53,7 +53,7 @@ def fleetup_characters(request):
 
     context = {"member_list": sorted(member_list.items())}
 
-    return render(request, 'registered/fleetupcharacters.html', context=context)
+    return render(request, 'fleetup/characters.html', context=context)
 
 
 @login_required
@@ -67,7 +67,7 @@ def fleetup_fittings(request):
         fitting_list = {}
 
     context = {"fitting_list": sorted(fitting_list.items())}
-    return render(request, 'registered/fleetupfittingsview.html', context=context)
+    return render(request, 'fleetup/fittingsview.html', context=context)
 
 
 @login_required
@@ -86,7 +86,7 @@ def fleetup_fitting(request, fittingnumber):
     context = {"fitting_eft": fitting_eft,
                "fitting_data": fitting_data,
                "doctrines_list": doctrines_list}
-    return render(request, 'registered/fleetupfitting.html', context=context)
+    return render(request, 'fleetup/fitting.html', context=context)
 
 
 @login_required
@@ -98,7 +98,7 @@ def fleetup_doctrines(request):
         messages.add_message(request, messages.ERROR, _("Failed to get doctrines list, contact your administrator"))
 
     context = {"doctrines_list": doctrines_list}
-    return render(request, 'registered/fleetupdoctrinesview.html', context=context)
+    return render(request, 'fleetup/doctrinesview.html', context=context)
 
 
 @login_required
@@ -109,4 +109,4 @@ def fleetup_doctrine(request, doctrinenumber):
     if doctrine is None:
         messages.add_message(request, messages.ERROR, _("Failed to get doctine, contact your administrator"))
     context = {"doctrine": doctrine}
-    return render(request, 'registered/fleetupdoctrine.html', context=context)
+    return render(request, 'fleetup/doctrine.html', context=context)
