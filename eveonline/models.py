@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 
 
 @python_2_unicode_compatible
@@ -18,6 +19,13 @@ class EveCharacter(models.Model):
 
     def __str__(self):
         return self.character_name
+
+    def in_organisation(self):
+        """
+        Check if the character is in one of the Auth organisations
+        :return: True if they are in one of the orgs, False otherwise
+        """
+        return str(self.corporation_id) in settings.STR_CORP_IDS or str(self.alliance_id) in settings.STR_ALLIANCE_IDS
 
 
 @python_2_unicode_compatible

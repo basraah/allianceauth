@@ -248,27 +248,32 @@ BLUE_CORP_GROUPS = 'True' == os.environ.get('AA_BLUE_CORP_GROUPS', 'False')
 BLUE_ALLIANCE_GROUPS = 'True' == os.environ.get('AA_BLUE_ALLIANCE_GROUPS', 'False')
 
 #########################
-# Corp Configuration
+# Tenant Configuration
 #########################
-# If running in alliance mode, the following should be for the executor corp#
-# CORP_ID - Set this to your corp ID (get this from https://zkillboard.com/corporation/#######)
-# CORP_NAME - Set this to your Corporation Name
-# CORP_API_ID - Set this to the api id for the corp API key
-# CORP_API_VCODE - Set this to the api vcode for the corp API key
-########################
-CORP_ID = os.environ.get('AA_CORP_ID', '1234')
-CORP_NAME = os.environ.get('AA_CORP_NAME', 'Alliance Auth Test Corp')
-CORP_API_ID = os.environ.get('AA_CORP_API_ID', '')
-CORP_API_VCODE = os.environ.get('AA_CORP_API_VCODE', '')
+# CORP_IDS - A list of corporation IDs to treat as members.
+# ALLIANCE_IDS - A list of alliance IDs to treat as members.
+# Any corps in a specified alliance will be treated as members, so do not include them in CORP_IDS
+#########################
+CORP_IDS = ['109299958']
+ALLIANCE_IDS = ['434243723']
 
 #########################
-# Alliance Configuration
+# Standings Configuration
 #########################
-# ALLIANCE_ID - Set this to your Alliance ID (get this from https://zkillboard.com/alliance/#######)
-# ALLIANCE_NAME - Set this to your Alliance Name
+# Add a corp API key to add blue standings to grant access.
+# CORP_API_ID - Set this to the api id for the corp API key
+# CORP_API_VCODE - Set this to the api vcode for the corp API key
+# BLUE_STANDING - The lowest standings value to consider blue
+# STANDING_LEVEL - The level of standings to query. Accepted values are 'corp' and 'alliance'.
+# BLUE_CORP_IDS - A list of corps to remain blue regardless of in-game standings
+# BLUE_ALLIANCE_IDS - A list of alliances to remain blue regardless of in-game standings
 ########################
-ALLIANCE_ID = os.environ.get('AA_ALLIANCE_ID', '12345')
-ALLIANCE_NAME = os.environ.get('AA_ALLIANCE_NAME', 'Alliance Auth Test Alliance')
+CORP_API_ID = os.environ.get('AA_CORP_API_ID', '')
+CORP_API_VCODE = os.environ.get('AA_CORP_API_VCODE', '')
+BLUE_STANDING = float(os.environ.get('AA_BLUE_STANDING', '5.0'))
+STANDING_LEVEL = os.environ.get('AA_STANDING_LEVEL', 'corp')
+BLUE_CORP_IDS = []
+BLUE_ALLIANCE_IDS = []
 
 ########################
 # API Configuration
@@ -462,6 +467,11 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.MD5PasswordHasher',
 ]
 
+# Ensure corp/alliance IDs are expected types
+STR_CORP_IDS = [str(id) for id in CORP_IDS]
+STR_ALLIANCE_IDS = [str(id) for id in ALLIANCE_IDS]
+STR_BLUE_CORP_IDS = [str(id) for id in BLUE_CORP_IDS]
+STR_BLUE_ALLIANCE_IDS = [str(id) for id in BLUE_ALLIANCE_IDS]
 
 LOGGING = {
     'version': 1,
