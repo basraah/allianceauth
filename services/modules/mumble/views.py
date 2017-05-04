@@ -25,20 +25,9 @@ ACCESS_PERM = 'mumble.access_mumble'
 @permission_required(ACCESS_PERM)
 def activate_mumble(request):
     logger.debug("activate_mumble called by user %s" % request.user)
-    authinfo = AuthServicesInfo.objects.get(user=request.user)
-    character = EveManager.get_main_character(request.user)
-    ticker = character.corporation_ticker
 
-    if authinfo.state == BLUE_STATE:
-        logger.debug("Adding mumble user for blue user %s with main character %s" % (request.user, character))
-        # Blue members should have alliance ticker (if in alliance)
-        if EveAllianceInfo.objects.filter(alliance_id=character.alliance_id).exists():
-            alliance = EveAllianceInfo.objects.filter(alliance_id=character.alliance_id)[0]
-            ticker = alliance.alliance_ticker
-        result = MumbleManager.create_user(request.user, ticker, character.character_name, blue=True)
-    else:
-        logger.debug("Adding mumble user for user %s with main character %s" % (request.user, character))
-        result = MumbleManager.create_user(request.user, ticker, character.character_name)
+    logger.debug("Adding mumble user for user %s" % (request.user))
+    result = MumbleManager.create_user(request.user, MumbleTasks.get_username(request.user))
 
     if result:
         logger.debug("Updated authserviceinfo for user %s with mumble credentials. Updating groups." % request.user)
