@@ -8,9 +8,9 @@ from requests_oauthlib import OAuth2Session
 from functools import wraps
 import logging
 import datetime
-import redis
 import time
 from django.utils import timezone
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,6 @@ class DiscordApiBackoff(DiscordApiException):
         self.retry_after = retry_after
 
 
-
 def api_backoff(func):
     """
     Decorator, Handles HTTP 429 "Too Many Requests" messages from the Discord API
@@ -74,7 +73,6 @@ def api_backoff(func):
         blocking = True if 'blocking' in kwargs and kwargs['blocking'] == True else False
         retries = kwargs['max_retries'] if 'max_retries' in kwargs else 3
 
-
         # Strip our parameters
         if 'max_retries' in kwargs:
             del kwargs['max_retries']
@@ -82,13 +80,12 @@ def api_backoff(func):
             del kwargs['blocking']
 
         redis_key = 'DISCORD_BACKOFF'
-        redis_client = redis.Redis()
         redis_format = '%Y-%m-%d %H:%M:%S'
 
         while retries > 0:
             try:
                 try:
-                    existing_backoff = redis_client.get(redis_key)
+                    existing_backoff = cache.get(redis_key)
                     if existing_backoff:
                         backoff_timer = datetime.datetime.strptime(existing_backoff, redis_format)
                         if backoff_timer > datetime.datetime.utcnow():
@@ -113,7 +110,7 @@ def api_backoff(func):
                         # Store value in redis
                         backoff_until = (datetime.datetime.utcnow() +
                                          datetime.timedelta(seconds=int(retry_after)))
-                        redis_client.set(redis_key, backoff_until.strftime(redis_format))
+                        cache.set(redis_key, backoff_until.strftime(redis_format), retry_after)
                         raise PerformBackoff(retry_after=retry_after, retry_datetime=backoff_until)
                     else:
                         # Not 429, re-raise

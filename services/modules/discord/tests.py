@@ -11,6 +11,7 @@ from django.test import TestCase, RequestFactory
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.cache import cache
 
 from alliance_auth.tests.auth_utils import AuthUtils
 
@@ -20,7 +21,6 @@ from .tasks import DiscordTasks
 from .manager import DiscordOAuthManager
 
 import requests_mock
-import fakeredis
 
 MODULE_PATH = 'services.modules.discord'
 
@@ -345,15 +345,13 @@ class DiscordManagerTestCase(TestCase):
         # Assert
         self.assertTrue(result)
 
-    @mock.patch(MODULE_PATH + '.manager.redis')
     @mock.patch(MODULE_PATH + '.manager.DiscordOAuthManager._DiscordOAuthManager__get_group_cache')
     @requests_mock.Mocker()
-    def test_update_groups(self, group_cache, redis, m):
+    def test_update_groups(self, group_cache, m):
         from . import manager
         import json
 
         # Arrange
-        redis.Redis.return_value = fakeredis.FakeStrictRedis()
         groups = ['Member', 'Blue', 'Special Group']
 
         group_cache.return_value = [{'id': 111, 'name': 'Member'},
@@ -380,15 +378,12 @@ class DiscordManagerTestCase(TestCase):
         self.assertIn(333, history['roles'], 'The group id 333 must be added to the request')
         self.assertNotIn(444, history['roles'], 'The group id 444 must NOT be added to the request')
 
-    @mock.patch(MODULE_PATH + '.manager.redis')
     @mock.patch(MODULE_PATH + '.manager.DiscordOAuthManager._DiscordOAuthManager__get_group_cache')
     @requests_mock.Mocker()
-    def test_update_groups_backoff(self, group_cache, redis, m):
+    def test_update_groups_backoff(self, group_cache, m):
         from . import manager
 
         # Arrange
-        redis.Redis.return_value = fakeredis.FakeStrictRedis()
-
         groups = ['Member']
         group_cache.return_value = [{'id': 111, 'name': 'Member'}]
 
