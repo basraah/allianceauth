@@ -117,7 +117,7 @@
                     <div class="panel-body">
                     {% for data in fitting_eft.items %}
                     {% autoescape off %}
-                    <pre>{{ fitting_eft.fitting_eft }}</pre>
+                    <textarea class="form-control" rows="25" spellcheck="false" onclick="this.focus();this.select()" readonly>{{ fitting_eft.fitting_eft }}</textarea>
                     {% endautoescape %}
                     {% endfor %}
                     </div>
