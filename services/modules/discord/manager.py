@@ -46,9 +46,13 @@ class DiscordApiTooBusy(DiscordApiException):
 
 
 class DiscordApiBackoff(DiscordApiException):
-    def __init__(self, retry_after):
+    def __init__(self, retry_after, global_ratelimit):
         super(DiscordApiException, self).__init__()
         self.retry_after = retry_after
+        self.global_ratelimit = global_ratelimit
+
+
+cache_time_format = '%Y-%m-%d %H:%M:%S'
 
 
 def api_backoff(func):
@@ -64,14 +68,16 @@ def api_backoff(func):
     """
 
     class PerformBackoff(Exception):
-        def __init__(self, retry_after, retry_datetime):
+        def __init__(self, retry_after, retry_datetime, global_ratelimit):
             super(Exception, self).__init__()
-            self.retry_after = retry_after
+            self.retry_after = int(retry_after)
+            self.retry_datetime = retry_datetime
+            self.global_ratelimit = global_ratelimit
 
     @wraps(func)
     def decorated(*args, **kwargs):
-        blocking = getattr(kwargs, 'blocking', False)
-        retries = getattr(kwargs, 'max_retries', 3)
+        blocking = kwargs.get('blocking', False)
+        retries = kwargs.get('max_retries', 3)
 
         # Strip our parameters
         if 'max_retries' in kwargs:
@@ -79,22 +85,26 @@ def api_backoff(func):
         if 'blocking' in kwargs:
             del kwargs['blocking']
 
-        redis_key = 'DISCORD_BACKOFF'
-        redis_format = '%Y-%m-%d %H:%M:%S'
+        cache_key = 'DISCORD_BACKOFF_' + func.__name__
+        cache_global_key = 'DISCORD_BACKOFF_GLOBAL'
 
         while retries > 0:
             try:
                 try:
-                    existing_backoff = cache.get(redis_key)
+                    # Check global backoff first, then route backoff
+                    existing_global_backoff = cache.get(cache_global_key)
+                    existing_backoff = existing_global_backoff or cache.get(cache_key)
                     if existing_backoff:
-                        backoff_timer = datetime.datetime.strptime(existing_backoff, redis_format)
+                        backoff_timer = datetime.datetime.strptime(existing_backoff, cache_time_format)
                         if backoff_timer > datetime.datetime.utcnow():
                             backoff_seconds = (backoff_timer - datetime.datetime.utcnow()).total_seconds()
                             logger.debug("Still under backoff for {} seconds, backing off" % backoff_seconds)
                             # Still under backoff
                             raise PerformBackoff(
                                 retry_after=backoff_seconds,
-                                retry_datetime=backoff_timer)
+                                retry_datetime=backoff_timer,
+                                global_ratelimit=bool(existing_global_backoff)
+                            )
                     logger.debug("Calling API calling function")
                     func(*args, **kwargs)
                     break
@@ -110,8 +120,14 @@ def api_backoff(func):
                         # Store value in redis
                         backoff_until = (datetime.datetime.utcnow() +
                                          datetime.timedelta(seconds=int(retry_after)))
-                        cache.set(redis_key, backoff_until.strftime(redis_format), retry_after)
-                        raise PerformBackoff(retry_after=retry_after, retry_datetime=backoff_until)
+                        global_backoff = bool(e.response.headers.get('X-RateLimit-Global', False))
+                        if global_backoff:
+                            logger.info("Global backoff!!")
+                            cache.set(cache_global_key, backoff_until.strftime(cache_time_format), retry_after)
+                        else:
+                            cache.set(cache_key, backoff_until.strftime(cache_time_format), retry_after)
+                        raise PerformBackoff(retry_after=retry_after, retry_datetime=backoff_until,
+                                             global_ratelimit=global_backoff)
                     else:
                         # Not 429, re-raise
                         raise e
@@ -122,7 +138,7 @@ def api_backoff(func):
                     time.sleep(10 if bo.retry_after > 10 else bo.retry_after)
                 else:
                     # Otherwise raise exception and let caller handle the backoff
-                    raise DiscordApiBackoff(retry_after=bo.retry_after)
+                    raise DiscordApiBackoff(retry_after=bo.retry_after, global_ratelimit=bo.global_ratelimit)
             finally:
                 retries -= 1
         if retries == 0:

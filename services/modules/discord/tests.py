@@ -11,7 +11,6 @@ from django.test import TestCase, RequestFactory
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.cache import cache
 
 from alliance_auth.tests.auth_utils import AuthUtils
 
@@ -21,6 +20,7 @@ from .tasks import DiscordTasks
 from .manager import DiscordOAuthManager
 
 import requests_mock
+import datetime
 
 MODULE_PATH = 'services.modules.discord'
 
@@ -198,7 +198,6 @@ class DiscordViewsTestCase(TestCase):
 
 
 class DiscordManagerTestCase(TestCase):
-
     def setUp(self):
         pass
 
@@ -378,9 +377,10 @@ class DiscordManagerTestCase(TestCase):
         self.assertIn(333, history['roles'], 'The group id 333 must be added to the request')
         self.assertNotIn(444, history['roles'], 'The group id 444 must NOT be added to the request')
 
+    @mock.patch(MODULE_PATH + '.manager.cache')
     @mock.patch(MODULE_PATH + '.manager.DiscordOAuthManager._DiscordOAuthManager__get_group_cache')
     @requests_mock.Mocker()
-    def test_update_groups_backoff(self, group_cache, m):
+    def test_update_groups_backoff(self, group_cache, djcache, m):
         from . import manager
 
         # Arrange
@@ -391,13 +391,58 @@ class DiscordManagerTestCase(TestCase):
         user_id = 12345
         request_url = '{}/guilds/{}/members/{}'.format(manager.DISCORD_URL, settings.DISCORD_GUILD_ID, user_id)
 
+        djcache.get.return_value = None  # No existing backoffs in cache
+
         m.patch(request_url,
                 request_headers=headers,
-                headers={'Retry-After': '20'},
+                headers={'Retry-After': '200'},
                 status_code=429)
 
         # Act & Assert
         with self.assertRaises(manager.DiscordApiBackoff) as bo:
-            DiscordOAuthManager.update_groups(user_id, groups, blocking=False)
+            try:
+                DiscordOAuthManager.update_groups(user_id, groups, blocking=False)
+            except manager.DiscordApiBackoff as bo:
+                self.assertEqual(bo.retry_after, 200, 'Retry-After time must be equal to Retry-After set in header')
+                self.assertFalse(bo.global_ratelimit, 'global_ratelimit must be False')
+                raise bo
 
-            self.assertEqual(bo.retry_after, 20, 'Retry-After time must be equal to Retry-After set in header')
+        self.assertTrue(djcache.set.called)
+        args, kwargs = djcache.set.call_args
+        self.assertEqual(args[0], 'DISCORD_BACKOFF_update_groups')
+        self.assertTrue(datetime.datetime.strptime(args[1], manager.cache_time_format) > datetime.datetime.now())
+
+    @mock.patch(MODULE_PATH + '.manager.cache')
+    @mock.patch(MODULE_PATH + '.manager.DiscordOAuthManager._DiscordOAuthManager__get_group_cache')
+    @requests_mock.Mocker()
+    def test_update_groups_global_backoff(self, group_cache, djcache, m):
+        from . import manager
+
+        # Arrange
+        groups = ['Member']
+        group_cache.return_value = [{'id': 111, 'name': 'Member'}]
+
+        headers = {'content-type': 'application/json', 'authorization': 'Bot ' + settings.DISCORD_BOT_TOKEN}
+        user_id = 12345
+        request_url = '{}/guilds/{}/members/{}'.format(manager.DISCORD_URL, settings.DISCORD_GUILD_ID, user_id)
+
+        djcache.get.return_value = None  # No existing backoffs in cache
+
+        m.patch(request_url,
+                request_headers=headers,
+                headers={'Retry-After': '200', 'X-RateLimit-Global': 'true'},
+                status_code=429)
+
+        # Act & Assert
+        with self.assertRaises(manager.DiscordApiBackoff) as bo:
+            try:
+                DiscordOAuthManager.update_groups(user_id, groups, blocking=False)
+            except manager.DiscordApiBackoff as bo:
+                self.assertEqual(bo.retry_after, 200, 'Retry-After time must be equal to Retry-After set in header')
+                self.assertTrue(bo.global_ratelimit, 'global_ratelimit must be True')
+                raise bo
+
+        self.assertTrue(djcache.set.called)
+        args, kwargs = djcache.set.call_args
+        self.assertEqual(args[0], 'DISCORD_BACKOFF_GLOBAL')
+        self.assertTrue(datetime.datetime.strptime(args[1], manager.cache_time_format) > datetime.datetime.now())
