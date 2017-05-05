@@ -70,8 +70,8 @@ def api_backoff(func):
 
     @wraps(func)
     def decorated(*args, **kwargs):
-        blocking = True if 'blocking' in kwargs and kwargs['blocking'] == True else False
-        retries = kwargs['max_retries'] if 'max_retries' in kwargs else 3
+        blocking = getattr(kwargs, 'blocking', False)
+        retries = getattr(kwargs, 'max_retries', 3)
 
         # Strip our parameters
         if 'max_retries' in kwargs:
