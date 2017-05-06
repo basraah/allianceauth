@@ -23,7 +23,7 @@ class FleetUpManager:
     @classmethod
     def _request_cache_key(cls, url):
         h = hashlib.sha1()
-        h.update(url)
+        h.update(url.encode('utf-8'))
         return 'FLEETUP_ENDPOINT_' + h.hexdigest()
 
     @classmethod
