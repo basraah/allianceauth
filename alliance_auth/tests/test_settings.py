@@ -18,6 +18,7 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
     #'--with-coverage',
     #'--cover-package=',
+    #'--exe',  # If your tests need this to be found/run, check they py files are not chmodded +x
 ]
 
 # Celery configuration
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
     'optimer',
     'corputils',
     'fleetactivitytracking',
+    'fleetup',
     'notifications',
     'esi',
     'permissions_tool',
