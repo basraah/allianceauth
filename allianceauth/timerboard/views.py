@@ -77,7 +77,7 @@ def add_timer_view(request):
             timer.save()
             logger.info("Created new timer in %s at %s by user %s" % (timer.system, timer.eve_time, request.user))
             messages.success(request, _('Added new timer in %(system)s at %(time)s.') % {"system": timer.system, "time": timer.eve_time})
-            return redirect("/timers/")
+            return redirect("timerboard:view")
     else:
         logger.debug("Returning new TimerForm")
         form = TimerForm()
@@ -96,7 +96,7 @@ def remove_timer(request, timer_id):
     logger.debug("Deleting timer id %s by user %s" % (timer_id, request.user))
     messages.success(request, _('Deleted timer in %(system)s at %(time)s.') % {'system': timer.system,
                                                                                    'time': timer.eve_time})
-    return redirect("auth_timer_view")
+    return redirect("timerboard:view")
 
 
 @login_required
@@ -132,7 +132,7 @@ def edit_timer(request, timer_id):
             logger.info("User %s updating timer id %s " % (request.user, timer_id))
             messages.success(request, _('Saved changes to the timer.'))
             timer.save()
-        return redirect("auth_timer_view")
+        return redirect("timerboard:view")
     else:
         current_time = timezone.now()
         td = timer.eve_time - current_time
