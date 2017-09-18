@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-from setuptools import setup, find_packages
+from setuptools import setup
 import allianceauth
 
-EXCLUDE_FROM_PACKAGES = ['alliance_auth', 'thirdparty', 'test_allianceauth']
 
 setup(
     name='allianceauth',
@@ -48,7 +47,7 @@ setup(
         'https://github.com/adarnof/adarnauth-esi/tarball/master#egg=adarnauth-esi',
     ],
     license='GPLv2',
-    packages=find_packages(exclude=EXCLUDE_FROM_PACKAGES),
+    packages=['allianceauth'],
     url='https://github.com/allianceauth/allianceauth',
     zip_safe=False,
     include_package_data=True,
