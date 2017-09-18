@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import random
 import string
 from passlib.hash import bcrypt_sha256

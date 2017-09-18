@@ -30,8 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Based on https://github.com/torchbox/wagtail/blob/master/wagtail/wagtailcore/hooks.py
 """
 
-from __future__ import unicode_literals
-
 from importlib import import_module
 
 from django.apps import apps

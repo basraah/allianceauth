@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from allianceauth.authentication.models import UserProfile, State, get_guest_state
 from allianceauth.authentication.signals import state_member_alliances_changed, state_member_characters_changed, \
     state_member_corporations_changed, state_saved

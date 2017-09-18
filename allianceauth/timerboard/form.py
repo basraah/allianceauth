@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from django import forms
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import ugettext_lazy as _

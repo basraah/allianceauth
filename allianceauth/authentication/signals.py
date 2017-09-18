@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import logging
 
 from .models import CharacterOwnership, UserProfile, get_guest_state, State

@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from django import template
 
 from allianceauth.hooks import get_hooks

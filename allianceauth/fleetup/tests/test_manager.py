@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 try:
     # Py3
     from unittest import mock
