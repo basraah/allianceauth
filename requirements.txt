@@ -1,4 +1,6 @@
-# Python Stuff # - see bootstrap.sh
+# Python dependencies
+# Any changes in these package requirements
+# should be reflected in setup.py as well.
 mysqlclient
 evelink
 dnspython
@@ -7,7 +9,7 @@ requests>=2.9.1
 bcrypt
 python-slugify>=1.2
 requests-oauthlib
-sleekxmpp
+
 redis
 celery>=4.0.2
 
@@ -22,6 +24,8 @@ django-recaptcha
 django-celery-beat
 git+https://github.com/adarnof/django-navhelper
 
+# Openfire
+sleekxmpp
 # awating pyghassen/openfire-restapi #1 to fix installation issues
 git+https://github.com/adarnof/openfire-restapi
 
