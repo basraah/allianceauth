@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django_celery_beat',
     'bootstrapform',
+    'esi',
+    'bootstrap_pagination',
     'allianceauth',
     'allianceauth.authentication',
     'allianceauth.services',
@@ -52,10 +54,9 @@ INSTALLED_APPS = [
     'allianceauth.fleetactivitytracking',
     'allianceauth.fleetup',
     'allianceauth.notifications',
-    'esi',
     'allianceauth.permissions_tool',
-    'geelweb.django.navhelper',
-    'bootstrap_pagination',
+    'allianceauth.thirdparty.navhelper',
+
     'allianceauth.services.modules.mumble',
     'allianceauth.services.modules.discord',
     'allianceauth.services.modules.discourse',
@@ -82,7 +83,7 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
 ]
 
-ROOT_URLCONF = 'allianceauth.urls'
+ROOT_URLCONF = 'test_allianceauth.urls'
 
 LOCALE_PATHS = (
     os.path.join(BASE_DIR, 'locale/'),
@@ -97,10 +98,7 @@ LOGIN_TOKEN_SCOPES = ['esi-characters.read_opportunities.v1']
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(BASE_DIR, 'customization/templates'),
-            os.path.join(BASE_DIR, 'stock/templates'),
-        ],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

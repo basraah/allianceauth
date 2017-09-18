@@ -27,7 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django_celery_beat',
     'bootstrapform',
-    'geelweb.django.navhelper',
+    'allianceauth.thirdparty.navhelper',
     'bootstrap_pagination',
     'sortedm2m',
     'allianceauth.authentication',
