@@ -32,19 +32,12 @@ setup(
         'django-redis-cache>=1.7.1',
         'django-recaptcha',
         'django-celery-beat',
-        'django-navhelper',
 
-        # TODO split to openfire service
-        # awating pyghassen/openfire-restapi #1 to fix installation issues
+        # Openfire
         'openfire-restapi',
         'sleekxmpp',
 
         'adarnauth-esi',
-    ],
-    dependency_links=[
-        'https://github.com/adarnof/django-navhelper/tarball/master#egg=django-navhelper-0',
-        'https://github.com/adarnof/openfire-restapi/tarball/master#egg=openfire-restapi-0',
-        'https://github.com/adarnof/adarnauth-esi/tarball/master#egg=adarnauth-esi',
     ],
     license='GPLv2',
     packages=['allianceauth'],
