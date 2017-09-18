@@ -1,9 +1,4 @@
-try:
-    # Py3
-    from unittest import mock
-except ImportError:
-    # Py2
-    import mock
+from unittest import mock
 
 from django.test import TestCase
 from django.contrib.auth.models import User
