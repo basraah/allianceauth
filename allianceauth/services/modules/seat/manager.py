@@ -7,7 +7,6 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
-from six import iteritems
 
 from allianceauth.eveonline.managers import EveManager
 
@@ -194,7 +193,7 @@ class SeatManager:
 
         if bool(seat_all_keys) and not user and getattr(settings, 'SEAT_PURGE_DELETED', False):
             # remove from SeAT keys that were removed from Auth
-            for key, key_user in iteritems(seat_all_keys):
+            for key, key_user in seat_all_keys.items():
                 # Remove the key only if it is an account or character key
                 ret = cls.exec_request('key/{}'.format(key), 'get')
                 logger.debug(ret)

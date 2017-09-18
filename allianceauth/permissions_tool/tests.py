@@ -6,8 +6,6 @@ from django.contrib.auth.models import Group, Permission
 
 from allianceauth.tests.auth_utils import AuthUtils
 
-import six
-
 
 class PermissionsToolViewsTestCase(TestCase):
     def setUp(self):
@@ -43,9 +41,7 @@ class PermissionsToolViewsTestCase(TestCase):
         self.client.login(username=self.member.username, password='password')
         response = self.client.get(urls.reverse('permissions_tool:overview'))
 
-        response_content = response.content
-        if six.PY3:
-            response_content = str(response_content, encoding='utf8')
+        response_content = str(response.content, encoding='utf8')
 
         self.assertInHTML(
             '<li><a class="active" href="/permissions/overview/"><i class="fa fa-key fa-id-card grayiconecolor"></i> Permissions Audit</a></li>',

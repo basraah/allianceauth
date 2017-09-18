@@ -1,12 +1,7 @@
-from django.utils import six
 import re
 import random
 import string
-try:
-    from urlparse import urlparse
-except ImportError:
-    # python 3
-    from urllib.parse import urlparse
+from urllib.parse import urlparse
 
 import sleekxmpp
 from django.conf import settings
@@ -128,7 +123,7 @@ class OpenfireManager:
         remote_groups = []
         if response:
             remote_groups = response['groupname']
-            if isinstance(remote_groups, six.string_types):
+            if isinstance(remote_groups, str):
                 remote_groups = [remote_groups]
         remote_groups = list(map(cls._sanitize_groupname, remote_groups))
         logger.debug("Openfire user %s has groups %s" % (username, remote_groups))
