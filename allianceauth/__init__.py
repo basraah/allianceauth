@@ -3,3 +3,5 @@
 
 __version__ = '2.0-dev'
 NAME = 'Alliance Auth v%s' % __version__
+default_app_config = 'allianceauth.apps.AllianceAuthConfig'
+
