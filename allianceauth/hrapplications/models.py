@@ -1,13 +1,11 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from sortedm2m.fields import SortedManyToManyField
 
 from allianceauth.eveonline.models import EveCharacter
 from allianceauth.eveonline.models import EveCorporationInfo
 
 
-@python_2_unicode_compatible
 class ApplicationQuestion(models.Model):
     title = models.CharField(max_length=254, verbose_name='Question')
     help_text = models.CharField(max_length=254, blank=True, null=True)
@@ -16,7 +14,6 @@ class ApplicationQuestion(models.Model):
         return "Question: " + self.title
 
 
-@python_2_unicode_compatible
 class ApplicationChoice(models.Model):
     question = models.ForeignKey(ApplicationQuestion,on_delete=models.CASCADE,related_name="choices")
     choice_text = models.CharField(max_length=200, verbose_name='Choice')
@@ -24,7 +21,6 @@ class ApplicationChoice(models.Model):
     def __str__(self):
         return self.choice_text
 
-@python_2_unicode_compatible
 class ApplicationForm(models.Model):
     questions = SortedManyToManyField(ApplicationQuestion)
     corp = models.OneToOneField(EveCorporationInfo)
@@ -33,7 +29,6 @@ class ApplicationForm(models.Model):
         return str(self.corp)
 
 
-@python_2_unicode_compatible
 class Application(models.Model):
     form = models.ForeignKey(ApplicationForm, on_delete=models.CASCADE, related_name='applications')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
@@ -69,7 +64,6 @@ class Application(models.Model):
             return None
 
 
-@python_2_unicode_compatible
 class ApplicationResponse(models.Model):
     question = models.ForeignKey(ApplicationQuestion, on_delete=models.CASCADE)
     application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='responses')
@@ -82,7 +76,6 @@ class ApplicationResponse(models.Model):
         unique_together = ('question', 'application')
 
 
-@python_2_unicode_compatible
 class ApplicationComment(models.Model):
     application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE)

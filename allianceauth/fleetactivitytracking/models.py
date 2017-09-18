@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
 
 from allianceauth.eveonline.models import EveCharacter
 
@@ -10,7 +9,6 @@ def get_sentinel_user():
     return User.objects.get_or_create(username='deleted')[0]
 
 
-@python_2_unicode_compatible
 class Fatlink(models.Model):
     fatdatetime = models.DateTimeField(default=timezone.now)
     duration = models.PositiveIntegerField()
@@ -23,7 +21,6 @@ class Fatlink(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class Fat(models.Model):
     character = models.ForeignKey(EveCharacter, on_delete=models.CASCADE)
     fatlink = models.ForeignKey(Fatlink)

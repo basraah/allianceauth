@@ -2,12 +2,10 @@ from datetime import datetime
 
 from django.db import models
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
 
 from allianceauth.eveonline.models import EveCharacter
 
 
-@python_2_unicode_compatible
 class OpTimer(models.Model):
     class Meta:
         ordering = ['start']

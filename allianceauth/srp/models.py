@@ -1,11 +1,9 @@
 from django.db import models
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
 
 from allianceauth.eveonline.models import EveCharacter
 
 
-@python_2_unicode_compatible
 class SrpFleetMain(models.Model):
     fleet_name = models.CharField(max_length=254, default="")
     fleet_doctrine = models.CharField(max_length=254, default="")
@@ -30,7 +28,6 @@ class SrpFleetMain(models.Model):
         permissions = (('access_srp', 'Can access SRP module'),)
 
 
-@python_2_unicode_compatible
 class SrpUserRequest(models.Model):
     SRP_STATUS_CHOICES = (
         ('Pending', 'Pending'),

@@ -2,7 +2,6 @@ import logging
 
 from django.contrib.auth.models import User, Permission
 from django.db import models, transaction
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 from allianceauth.eveonline.models import EveCharacter, EveCorporationInfo, EveAllianceInfo
 from allianceauth.notifications import notify
@@ -12,7 +11,6 @@ from .managers import CharacterOwnershipManager, StateManager
 logger = logging.getLogger(__name__)
 
 
-@python_2_unicode_compatible
 class State(models.Model):
     name = models.CharField(max_length=20, unique=True)
     permissions = models.ManyToManyField(Permission, blank=True)
@@ -59,7 +57,6 @@ def get_guest_state_pk():
     return get_guest_state().pk
 
 
-@python_2_unicode_compatible
 class UserProfile(models.Model):
     class Meta:
         default_permissions = ('change',)
@@ -86,7 +83,6 @@ class UserProfile(models.Model):
         return str(self.user)
 
 
-@python_2_unicode_compatible
 class CharacterOwnership(models.Model):
     class Meta:
         default_permissions = ('change', 'delete')

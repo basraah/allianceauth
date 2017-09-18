@@ -1,9 +1,7 @@
-from django.utils.encoding import python_2_unicode_compatible
 from django.contrib.auth.models import User
 from django.db import models
 
 
-@python_2_unicode_compatible
 class DiscordUser(models.Model):
     user = models.OneToOneField(User,
                                 primary_key=True,

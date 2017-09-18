@@ -1,8 +1,6 @@
-from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 
 
-@python_2_unicode_compatible
 class EveCharacter(models.Model):
     character_id = models.CharField(max_length=254, unique=True)
     character_name = models.CharField(max_length=254, unique=True)
@@ -16,7 +14,6 @@ class EveCharacter(models.Model):
         return self.character_name
 
 
-@python_2_unicode_compatible
 class EveAllianceInfo(models.Model):
     alliance_id = models.CharField(max_length=254, unique=True)
     alliance_name = models.CharField(max_length=254, unique=True)
@@ -27,7 +24,6 @@ class EveAllianceInfo(models.Model):
         return self.alliance_name
 
 
-@python_2_unicode_compatible
 class EveCorporationInfo(models.Model):
     corporation_id = models.CharField(max_length=254, unique=True)
     corporation_name = models.CharField(max_length=254, unique=True)

@@ -1,8 +1,6 @@
-from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 
 
-@python_2_unicode_compatible
 class Phpbb3User(models.Model):
     user = models.OneToOneField('auth.User',
                                 primary_key=True,

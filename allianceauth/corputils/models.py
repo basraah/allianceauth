@@ -4,7 +4,6 @@ import os
 from allianceauth.authentication.models import CharacterOwnership, UserProfile
 from bravado.exception import HTTPForbidden
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from esi.errors import TokenError
 from esi.models import Token
 from allianceauth.eveonline.models import EveCorporationInfo, EveCharacter
@@ -17,7 +16,6 @@ SWAGGER_SPEC_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sw
 logger = logging.getLogger(__name__)
 
 
-@python_2_unicode_compatible
 class CorpStats(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
     corp = models.OneToOneField(EveCorporationInfo)

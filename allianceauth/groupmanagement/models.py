@@ -3,12 +3,10 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils.encoding import python_2_unicode_compatible
 
 from allianceauth.eveonline.models import EveCharacter
 
 
-@python_2_unicode_compatible
 class GroupRequest(models.Model):
     status = models.CharField(max_length=254)
     leave_request = models.BooleanField(default=0)
@@ -20,7 +18,6 @@ class GroupRequest(models.Model):
         return self.user.username + ":" + self.group.name
 
 
-@python_2_unicode_compatible
 class AuthGroup(models.Model):
     """
     Extends Django Group model with a one-to-one field

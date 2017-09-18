@@ -1,4 +1,3 @@
-from django.utils.encoding import python_2_unicode_compatible
 from esi.clients import esi_client_factory
 from django.conf import settings
 from django.core.cache import cache
@@ -16,7 +15,6 @@ logger = logging.getLogger(__name__)
 OBJ_CACHE_DURATION = int(getattr(settings, 'EVEONLINE_OBJ_CACHE_DURATION', 300))
 
 
-@python_2_unicode_compatible
 class ObjectNotFound(Exception):
     def __init__(self, obj_id, type_name):
         self.id = obj_id
@@ -26,7 +24,6 @@ class ObjectNotFound(Exception):
         return '%s with ID %s not found.' % (self.type, self.id)
 
 
-@python_2_unicode_compatible
 class Entity(object):
     def __init__(self, id, name):
         self.id = id
@@ -228,7 +225,6 @@ class EveProvider(object):
         raise NotImplemented()
 
 
-@python_2_unicode_compatible
 class EveSwaggerProvider(EveProvider):
     def __init__(self, token=None, adapter=None):
         self.client = esi_client_factory(token=token, spec_file=SWAGGER_SPEC_PATH)
@@ -292,7 +288,6 @@ class EveSwaggerProvider(EveProvider):
             raise ObjectNotFound(type_id, 'type')
 
 
-@python_2_unicode_compatible
 class EveXmlProvider(EveProvider):
     def __init__(self, api_key=None, adapter=None):
         """
