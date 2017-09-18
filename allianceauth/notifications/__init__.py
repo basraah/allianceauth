@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+default_app_config = 'allianceauth.notifications.apps.NotificationsConfig'
 import logging
 
 logger = logging.getLogger(__name__)

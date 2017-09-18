@@ -4,4 +4,5 @@ from django.apps import AppConfig
 
 
 class DiscordServiceConfig(AppConfig):
-    name = 'discord'
+    name = 'allianceauth.services.modules.discord'
+    label = 'discord'

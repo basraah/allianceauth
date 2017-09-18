@@ -4,4 +4,5 @@ from django.apps import AppConfig
 
 
 class XenforoServiceConfig(AppConfig):
-    name = 'xenforo'
+    name = 'allianceauth.services.modules.xenforo'
+    label = 'xenforo'

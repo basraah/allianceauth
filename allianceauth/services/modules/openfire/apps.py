@@ -4,4 +4,5 @@ from django.apps import AppConfig
 
 
 class OpenfireServiceConfig(AppConfig):
-    name = 'openfire'
+    name = 'allianceauth.services.modules.openfire'
+    label = 'openfire'

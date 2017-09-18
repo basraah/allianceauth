@@ -4,4 +4,5 @@ from django.apps import AppConfig
 
 
 class ExampleServiceConfig(AppConfig):
-    name = 'example_service'
+    name = 'allianceauth.services.modules.example'
+    label = 'example_service'

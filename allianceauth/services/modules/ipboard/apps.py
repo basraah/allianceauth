@@ -4,4 +4,5 @@ from django.apps import AppConfig
 
 
 class IpboardServiceConfig(AppConfig):
-    name = 'ipboard'
+    name = 'allianceauth.services.modules.ipboard'
+    label = 'ipboard'

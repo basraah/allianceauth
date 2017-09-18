@@ -4,4 +4,5 @@ from django.apps import AppConfig
 
 
 class Phpbb3ServiceConfig(AppConfig):
-    name = 'phpbb3'
+    name = 'allianceauth.services.modules.phpbb3'
+    label = 'phpbb3'

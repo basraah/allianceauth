@@ -4,4 +4,5 @@ from django.apps import AppConfig
 
 
 class MarketServiceConfig(AppConfig):
-    name = 'market'
+    name = 'allianceauth.services.modules.market'
+    label = 'market'

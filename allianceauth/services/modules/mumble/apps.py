@@ -4,4 +4,5 @@ from django.apps import AppConfig
 
 
 class MumbleServiceConfig(AppConfig):
-    name = 'mumble'
+    name = 'allianceauth.services.modules.mumble'
+    label = 'mumble'
