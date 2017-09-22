@@ -52,7 +52,7 @@
                     </li>
                     {% if notifications %}
                         <li class="nav-link active">
-                            <a href="{% url 'auth_notification_list' %}">
+                            <a href="{% url 'notifications:list' %}">
                             <span class="fa-stack">
                                 <i class="fa fa-bell fa-stack-2x"></i>
                                 <i class="fa fa-inverse fa-stack-1x">{{ notifications }}</i>

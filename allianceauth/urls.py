@@ -10,6 +10,7 @@ from django.views.generic.base import TemplateView
 
 import allianceauth.authentication.views
 import allianceauth.authentication.urls
+import allianceauth.notifications.urls
 from allianceauth import NAME
 
 from allianceauth.authentication import hmac_urls
@@ -36,10 +37,7 @@ urlpatterns = [
     url(r'^sso/login$', allianceauth.authentication.views.sso_login, name='auth_sso_login'),
 
     # Notifications
-    url(r'^remove_notifications/(\w+)/$', allianceauth.notifications.views.remove_notification, name='auth_remove_notification'),
-    url(r'^notifications/mark_all_read/$', allianceauth.notifications.views.mark_all_read, name='auth_mark_all_notifications_read'),
-    url(r'^notifications/delete_all_read/$', allianceauth.notifications.views.delete_all_read,
-        name='auth_delete_all_read_notifications'),
+    url(r'', include(allianceauth.notifications.urls))
 ]
 
 # User viewed/translated URLS
@@ -73,12 +71,6 @@ urlpatterns += i18n_patterns(
     # Tools
     url(_(r'^tool/fleet_formatter_tool/$'), allianceauth.services.views.fleet_formatter_view,
         name='auth_fleet_format_tool_view'),
-
-    # Notifications
-    url(_(r'^notifications/$'), allianceauth.notifications.views.notification_list, name='auth_notification_list'),
-    url(_(r'^notifications/(\w+)/$'), allianceauth.notifications.views.notification_view, name='auth_notification_view'),
-
-
 )
 
 # Append hooked service urls
