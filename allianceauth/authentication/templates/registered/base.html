@@ -88,15 +88,15 @@
                             </a>
                         </li>
                         <li>
-                            <a class="{% navactive request 'auth_groups' %}" href="{% url 'auth_groups' %}">
+                            <a class="{% navactive request 'groupmanagement:groups' %}" href="{% url 'groupmanagement:groups' %}">
                                 <i class="fa fa-cogs fa-fw fa-sitemap grayiconecolor"></i>{% trans " Groups" %}
                             </a>
                         </li>
 
                         {% if can_manage_groups %}
                             <li>
-                                <a class="{% navactive request 'auth_group_management auth_group_membership auth_group_membership_list' %}"
-                                   href="{% url 'auth_group_management' %}">
+                                <a class="{% navactive request 'groupmanagement:management groupmanagement:membership groupmanagement:membership_list' %}"
+                                   href="{% url 'groupmanagement:management' %}">
                                     <i class="fa fa-lock fa-sitemap fa-fw grayiconecolor"></i>{% trans " Group Management" %}
                                 </a>
                             </li>
