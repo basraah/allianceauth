@@ -1,8 +1,9 @@
 from . import views
 
 from django.conf.urls import include, url
+app_name = 'groupmanagement'
 
-app_urlpatterns = [
+urlpatterns = [
     url(r'^groups/', views.groups_view, name='groups'),
     url(r'^group/', include([
         url(r'^management/', views.group_management,
@@ -27,8 +28,4 @@ app_urlpatterns = [
         url(r'^leave_request/reject/(\w+)', views.group_leave_reject_request,
             name='leave_reject_request'),
     ])),
-]
-
-urlpatterns = [
-    url('', include(app_urlpatterns, namespace='groupmanagement'))
 ]
