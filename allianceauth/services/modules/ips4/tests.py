@@ -53,16 +53,16 @@ class Ips4HooksTestCase(TestCase):
 
         response = service.render_services_ctrl(request)
         self.assertTemplateUsed(service.service_ctrl_template)
-        self.assertIn(urls.reverse('auth_set_ips4_password'), response)
-        self.assertIn(urls.reverse('auth_reset_ips4_password'), response)
-        self.assertIn(urls.reverse('auth_deactivate_ips4'), response)
+        self.assertIn(urls.reverse('ips4:set_password'), response)
+        self.assertIn(urls.reverse('ips4:reset_password'), response)
+        self.assertIn(urls.reverse('ips4:deactivate'), response)
 
         # Test register becomes available
         member.ips4.delete()
         member = User.objects.get(username=self.member)
         request.user = member
         response = service.render_services_ctrl(request)
-        self.assertIn(urls.reverse('auth_activate_ips4'), response)
+        self.assertIn(urls.reverse('ips4:activate'), response)
 
 
 class Ips4ViewsTestCase(TestCase):
@@ -86,7 +86,7 @@ class Ips4ViewsTestCase(TestCase):
 
         manager.add_user.return_value = (expected_username, expected_password, expected_id)
 
-        response = self.client.get(urls.reverse('auth_activate_ips4'), follow=False)
+        response = self.client.get(urls.reverse('ips4:activate'), follow=False)
 
         self.assertTrue(manager.add_user.called)
         args, kwargs = manager.add_user.call_args
@@ -103,7 +103,7 @@ class Ips4ViewsTestCase(TestCase):
         Ips4User.objects.create(user=self.member, username='12345', id='1234')
         manager.delete_user.return_value = True
 
-        response = self.client.get(urls.reverse('auth_deactivate_ips4'))
+        response = self.client.get(urls.reverse('ips4:deactivate'))
 
         self.assertTrue(manager.delete_user.called)
         self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
@@ -117,7 +117,7 @@ class Ips4ViewsTestCase(TestCase):
         expected_password = 'password'
         manager.update_user_password.return_value = expected_password
 
-        response = self.client.post(urls.reverse('auth_set_ips4_password'), data={'password': expected_password})
+        response = self.client.post(urls.reverse('ips4:set_password'), data={'password': expected_password})
 
         self.assertTrue(manager.update_custom_password.called)
         args, kwargs = manager.update_custom_password.call_args
@@ -129,7 +129,7 @@ class Ips4ViewsTestCase(TestCase):
         self.login()
         Ips4User.objects.create(user=self.member, username='12345', id='1234')
 
-        response = self.client.get(urls.reverse('auth_reset_ips4_password'))
+        response = self.client.get(urls.reverse('ips4:reset_password'))
 
         self.assertTrue(manager.update_user_password.called)
         self.assertTemplateUsed(response, 'services/service_credentials.html')

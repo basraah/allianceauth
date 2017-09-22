@@ -84,16 +84,16 @@ class XenforoHooksTestCase(TestCase):
 
         response = service.render_services_ctrl(request)
         self.assertTemplateUsed(service.service_ctrl_template)
-        self.assertIn(urls.reverse('auth_deactivate_xenforo'), response)
-        self.assertIn(urls.reverse('auth_reset_xenforo_password'), response)
-        self.assertIn(urls.reverse('auth_set_xenforo_password'), response)
+        self.assertIn(urls.reverse('xenforo:deactivate'), response)
+        self.assertIn(urls.reverse('xenforo:reset_password'), response)
+        self.assertIn(urls.reverse('xenforo:set_password'), response)
 
         # Test register becomes available
         member.xenforo.delete()
         member = User.objects.get(username=self.member)
         request.user = member
         response = service.render_services_ctrl(request)
-        self.assertIn(urls.reverse('auth_activate_xenforo'), response)
+        self.assertIn(urls.reverse('xenforo:activate'), response)
 
 
 class XenforoViewsTestCase(TestCase):
@@ -119,7 +119,7 @@ class XenforoViewsTestCase(TestCase):
             'username': expected_username,
         }
 
-        response = self.client.get(urls.reverse('auth_activate_xenforo'))
+        response = self.client.get(urls.reverse('xenforo:activate'))
 
         self.assertTrue(manager.add_user.called)
         self.assertEqual(response.status_code, 200)
@@ -135,7 +135,7 @@ class XenforoViewsTestCase(TestCase):
 
         manager.disable_user.return_value = 200
 
-        response = self.client.get(urls.reverse('auth_deactivate_xenforo'))
+        response = self.client.get(urls.reverse('xenforo:deactivate'))
 
         self.assertTrue(manager.disable_user.called)
         self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
@@ -147,7 +147,7 @@ class XenforoViewsTestCase(TestCase):
         self.login()
         XenforoUser.objects.create(user=self.member, username='some member')
 
-        response = self.client.post(urls.reverse('auth_set_xenforo_password'), data={'password': '1234asdf'})
+        response = self.client.post(urls.reverse('xenforo:set_password'), data={'password': '1234asdf'})
 
         self.assertTrue(manager.update_user_password.called)
         args, kwargs = manager.update_user_password.call_args
@@ -164,7 +164,7 @@ class XenforoViewsTestCase(TestCase):
             'password': 'hunter2',
         }
 
-        response = self.client.get(urls.reverse('auth_reset_xenforo_password'))
+        response = self.client.get(urls.reverse('xenforo:reset_password'))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'services/service_credentials.html')

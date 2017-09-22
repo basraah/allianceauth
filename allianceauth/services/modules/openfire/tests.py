@@ -103,21 +103,21 @@ class OpenfireHooksTestCase(TestCase):
     def test_render_services_ctrl(self):
         service = self.service()
         member = User.objects.get(username=self.member)
-        request = RequestFactory().get('/en/services/')
+        request = RequestFactory().get('/services/')
         request.user = member
 
         response = service.render_services_ctrl(request)
         self.assertTemplateUsed(service.service_ctrl_template)
-        self.assertIn(urls.reverse('auth_deactivate_openfire'), response)
-        self.assertIn(urls.reverse('auth_reset_openfire_password'), response)
-        self.assertIn(urls.reverse('auth_set_openfire_password'), response)
+        self.assertIn(urls.reverse('openfire:deactivate'), response)
+        self.assertIn(urls.reverse('openfire:reset_password'), response)
+        self.assertIn(urls.reverse('openfire:set_password'), response)
 
         # Test register becomes available
         member.openfire.delete()
         member = User.objects.get(username=self.member)
         request.user = member
         response = service.render_services_ctrl(request)
-        self.assertIn(urls.reverse('auth_activate_openfire'), response)
+        self.assertIn(urls.reverse('openfire:activate'), response)
 
 
 class OpenfireViewsTestCase(TestCase):
@@ -139,7 +139,7 @@ class OpenfireViewsTestCase(TestCase):
         expected_username = 'auth_member'
         manager.add_user.return_value = (expected_username, 'abc123')
 
-        response = self.client.get(urls.reverse('auth_activate_openfire'))
+        response = self.client.get(urls.reverse('openfire:activate'))
 
         self.assertTrue(manager.add_user.called)
         self.assertTrue(tasks_manager.update_user_groups.called)
@@ -154,7 +154,7 @@ class OpenfireViewsTestCase(TestCase):
         self.login()
         OpenfireUser.objects.create(user=self.member, username='some member')
 
-        response = self.client.get(urls.reverse('auth_deactivate_openfire'))
+        response = self.client.get(urls.reverse('openfire:deactivate'))
 
         self.assertTrue(manager.delete_user.called)
         self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
@@ -166,7 +166,7 @@ class OpenfireViewsTestCase(TestCase):
         self.login()
         OpenfireUser.objects.create(user=self.member, username='some member')
 
-        response = self.client.post(urls.reverse('auth_set_openfire_password'), data={'password': '1234asdf'})
+        response = self.client.post(urls.reverse('openfire:set_password'), data={'password': '1234asdf'})
 
         self.assertTrue(manager.update_user_pass.called)
         args, kwargs = manager.update_user_pass.call_args
@@ -180,7 +180,7 @@ class OpenfireViewsTestCase(TestCase):
 
         manager.update_user_pass.return_value = 'hunter2'
 
-        response = self.client.get(urls.reverse('auth_reset_openfire_password'))
+        response = self.client.get(urls.reverse('openfire:reset_password'))
 
         self.assertTemplateUsed(response, 'services/service_credentials.html')
         self.assertContains(response, 'some member')

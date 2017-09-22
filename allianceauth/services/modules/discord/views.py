@@ -34,7 +34,7 @@ def reset_discord(request):
     logger.debug("reset_discord called by user %s" % request.user)
     if DiscordTasks.delete_user(request.user):
         logger.info("Successfully deleted discord user for user %s - forwarding to discord activation." % request.user)
-        return redirect("auth_activate_discord")
+        return redirect("discord:activate")
     logger.error("Unsuccessful attempt to reset discord for user %s" % request.user)
     messages.error(request, 'An error occurred while processing your Discord account.')
     return redirect("services:services")

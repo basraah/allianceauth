@@ -107,21 +107,21 @@ class SeatHooksTestCase(TestCase):
     def test_render_services_ctrl(self):
         service = self.service()
         member = User.objects.get(username=self.member)
-        request = RequestFactory().get('/en/services/')
+        request = RequestFactory().get('/services/')
         request.user = member
 
         response = service.render_services_ctrl(request)
         self.assertTemplateUsed(service.service_ctrl_template)
-        self.assertIn(urls.reverse('auth_deactivate_seat'), response)
-        self.assertIn(urls.reverse('auth_reset_seat_password'), response)
-        self.assertIn(urls.reverse('auth_set_seat_password'), response)
+        self.assertIn(urls.reverse('seat:deactivate'), response)
+        self.assertIn(urls.reverse('seat:reset_password'), response)
+        self.assertIn(urls.reverse('seat:set_password'), response)
 
         # Test register becomes available
         member.seat.delete()
         member = User.objects.get(username=self.member)
         request.user = member
         response = service.render_services_ctrl(request)
-        self.assertIn(urls.reverse('auth_activate_seat'), response)
+        self.assertIn(urls.reverse('seat:activate'), response)
 
 
 class SeatViewsTestCase(TestCase):
@@ -144,7 +144,7 @@ class SeatViewsTestCase(TestCase):
         manager.check_user_status.return_value = {}
         manager.add_user.return_value = (expected_username, 'abc123')
 
-        response = self.client.get(urls.reverse('auth_activate_seat'))
+        response = self.client.get(urls.reverse('seat:activate'))
 
         self.assertTrue(manager.add_user.called)
         self.assertTrue(tasks_manager.update_roles.called)
@@ -160,7 +160,7 @@ class SeatViewsTestCase(TestCase):
         self.login()
         SeatUser.objects.create(user=self.member, username='some member')
 
-        response = self.client.get(urls.reverse('auth_deactivate_seat'))
+        response = self.client.get(urls.reverse('seat:deactivate'))
 
         self.assertTrue(manager.delete_user.called)
         self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
@@ -172,7 +172,7 @@ class SeatViewsTestCase(TestCase):
         self.login()
         SeatUser.objects.create(user=self.member, username='some member')
 
-        response = self.client.post(urls.reverse('auth_set_seat_password'), data={'password': '1234asdf'})
+        response = self.client.post(urls.reverse('seat:set_password'), data={'password': '1234asdf'})
 
         self.assertTrue(manager.update_user_password.called)
         args, kwargs = manager.update_user_password.call_args
@@ -186,7 +186,7 @@ class SeatViewsTestCase(TestCase):
 
         manager.update_user_password.return_value = 'hunter2'
 
-        response = self.client.get(urls.reverse('auth_reset_seat_password'))
+        response = self.client.get(urls.reverse('seat:reset_password'))
 
         self.assertTemplateUsed(response, 'services/service_credentials.html')
         self.assertContains(response, 'some member')

@@ -31,7 +31,7 @@ def activate_teamspeak3(request):
         logger.debug("Updated authserviceinfo for user %s with TS3 credentials. Updating groups." % request.user)
         logger.info("Successfully activated TS3 for user %s" % request.user)
         messages.success(request, 'Activated TeamSpeak3 account.')
-        return redirect("auth_verify_teamspeak3")
+        return redirect("teamspeak3:verify")
     logger.error("Unsuccessful attempt to activate TS3 for user %s" % request.user)
     messages.error(request, 'An error occurred while processing your TeamSpeak3 account.')
     return redirect("services:services")
@@ -57,7 +57,7 @@ def verify_teamspeak3(request):
         'authinfo': {'teamspeak3_uid': request.user.teamspeak3.uid,
                      'teamspeak3_perm_key': request.user.teamspeak3.perm_key},
     }
-    return render(request, 'services/teamspeak/teamspeakjoin.html', context=context)
+    return render(request, 'services/teamspeak3/teamspeakjoin.html', context=context)
 
 
 @login_required
