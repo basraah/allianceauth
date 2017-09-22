@@ -1,16 +1,14 @@
 import esi.urls
 
-import allianceauth.services.views
 from django.conf.urls import include, url
-from django.conf.urls.i18n import i18n_patterns
 from django.contrib import admin
-from django.utils.translation import ugettext_lazy as _
 from django.views.generic.base import TemplateView
 
 import allianceauth.authentication.views
 import allianceauth.authentication.urls
 import allianceauth.notifications.urls
 import allianceauth.groupmanagement.urls
+import allianceauth.services.urls
 from allianceauth import NAME
 
 from allianceauth.authentication import hmac_urls
@@ -41,24 +39,10 @@ urlpatterns = [
 
     # Groups
     url(r'', include(allianceauth.groupmanagement.urls)),
+
+    # Services
+    url(r'', include(allianceauth.services.urls)),
 ]
-
-# User viewed/translated URLS
-urlpatterns += i18n_patterns(
-    # Group management
-
-
-    url(_(r'^services/$'), allianceauth.services.views.services_view, name='auth_services'),
-
-    # Tools
-    url(_(r'^tool/fleet_formatter_tool/$'), allianceauth.services.views.fleet_formatter_view,
-        name='auth_fleet_format_tool_view'),
-)
-
-# Append hooked service urls
-services = get_hooks('services_hook')
-for svc in services:
-    urlpatterns += svc().urlpatterns
 
 # Append app urls
 app_urls = get_hooks('url_hook')

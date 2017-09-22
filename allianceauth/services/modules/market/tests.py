@@ -121,7 +121,7 @@ class MarketViewsTestCase(TestCase):
         self.assertEqual(args[0], expected_username)
         self.assertEqual(args[1], self.member.email)
 
-        self.assertTemplateUsed(response, 'registered/service_credentials.html')
+        self.assertTemplateUsed(response, 'services/service_credentials.html')
         self.assertContains(response, expected_username)
         self.assertContains(response, expected_password)
 
@@ -134,7 +134,7 @@ class MarketViewsTestCase(TestCase):
         response = self.client.get(urls.reverse('auth_deactivate_market'))
 
         self.assertTrue(manager.disable_user.called)
-        self.assertRedirects(response, expected_url=urls.reverse('auth_services'), target_status_code=200)
+        self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
         with self.assertRaises(ObjectDoesNotExist):
             market_user = User.objects.get(pk=self.member.pk).market
 
@@ -150,7 +150,7 @@ class MarketViewsTestCase(TestCase):
         self.assertTrue(manager.update_custom_password.called)
         args, kwargs = manager.update_custom_password.call_args
         self.assertEqual(args[1], expected_password)
-        self.assertRedirects(response, expected_url=urls.reverse('auth_services'), target_status_code=200)
+        self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
 
     @mock.patch(MODULE_PATH + '.views.MarketManager')
     def test_reset_password(self, manager):
@@ -160,7 +160,7 @@ class MarketViewsTestCase(TestCase):
         response = self.client.get(urls.reverse('auth_reset_market_password'))
 
         self.assertTrue(manager.update_user_password.called)
-        self.assertTemplateUsed(response, 'registered/service_credentials.html')
+        self.assertTemplateUsed(response, 'services/service_credentials.html')
 
 
 class MarketManagerTestCase(TestCase):

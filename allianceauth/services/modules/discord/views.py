@@ -25,7 +25,7 @@ def deactivate_discord(request):
     else:
         logger.error("Unsuccessful attempt to deactivate discord for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your Discord account.')
-    return redirect("auth_services")
+    return redirect("services:services")
 
 
 @login_required
@@ -37,7 +37,7 @@ def reset_discord(request):
         return redirect("auth_activate_discord")
     logger.error("Unsuccessful attempt to reset discord for user %s" % request.user)
     messages.error(request, 'An error occurred while processing your Discord account.')
-    return redirect("auth_services")
+    return redirect("services:services")
 
 
 @login_required
@@ -54,14 +54,14 @@ def discord_callback(request):
     code = request.GET.get('code', None)
     if not code:
         logger.warn("Did not receive OAuth code from callback of user %s" % request.user)
-        return redirect("auth_services")
+        return redirect("services:services")
     if DiscordTasks.add_user(request.user, code):
         logger.info("Successfully activated Discord for user %s" % request.user)
         messages.success(request, 'Activated Discord account.')
     else:
         logger.error("Failed to activate Discord for user %s" % request.user)
         messages.error(request, 'An error occurred while processing your Discord account.')
-    return redirect("auth_services")
+    return redirect("services:services")
 
 
 @login_required

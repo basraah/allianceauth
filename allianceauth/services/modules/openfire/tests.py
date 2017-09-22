@@ -144,7 +144,7 @@ class OpenfireViewsTestCase(TestCase):
         self.assertTrue(manager.add_user.called)
         self.assertTrue(tasks_manager.update_user_groups.called)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed('registered/service_credentials.html')
+        self.assertTemplateUsed('services/service_credentials.html')
         self.assertContains(response, expected_username)
         openfire_user = OpenfireUser.objects.get(user=self.member)
         self.assertEqual(openfire_user.username, expected_username)
@@ -157,7 +157,7 @@ class OpenfireViewsTestCase(TestCase):
         response = self.client.get(urls.reverse('auth_deactivate_openfire'))
 
         self.assertTrue(manager.delete_user.called)
-        self.assertRedirects(response, expected_url=urls.reverse('auth_services'), target_status_code=200)
+        self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
         with self.assertRaises(ObjectDoesNotExist):
             openfire_user = User.objects.get(pk=self.member.pk).openfire
 
@@ -171,7 +171,7 @@ class OpenfireViewsTestCase(TestCase):
         self.assertTrue(manager.update_user_pass.called)
         args, kwargs = manager.update_user_pass.call_args
         self.assertEqual(kwargs['password'], '1234asdf')
-        self.assertRedirects(response, expected_url=urls.reverse('auth_services'), target_status_code=200)
+        self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
 
     @mock.patch(MODULE_PATH + '.views.OpenfireManager')
     def test_reset_password(self, manager):
@@ -182,7 +182,7 @@ class OpenfireViewsTestCase(TestCase):
 
         response = self.client.get(urls.reverse('auth_reset_openfire_password'))
 
-        self.assertTemplateUsed(response, 'registered/service_credentials.html')
+        self.assertTemplateUsed(response, 'services/service_credentials.html')
         self.assertContains(response, 'some member')
         self.assertContains(response, 'hunter2')
 

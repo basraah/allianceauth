@@ -149,7 +149,7 @@ class SeatViewsTestCase(TestCase):
         self.assertTrue(manager.add_user.called)
         self.assertTrue(tasks_manager.update_roles.called)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed('registered/service_credentials.html')
+        self.assertTemplateUsed('services/service_credentials.html')
         self.assertContains(response, expected_username)
         seat_user = SeatUser.objects.get(user=self.member)
         self.assertEqual(seat_user.username, expected_username)
@@ -163,7 +163,7 @@ class SeatViewsTestCase(TestCase):
         response = self.client.get(urls.reverse('auth_deactivate_seat'))
 
         self.assertTrue(manager.delete_user.called)
-        self.assertRedirects(response, expected_url=urls.reverse('auth_services'), target_status_code=200)
+        self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
         with self.assertRaises(ObjectDoesNotExist):
             seat_user = User.objects.get(pk=self.member.pk).seat
 
@@ -177,7 +177,7 @@ class SeatViewsTestCase(TestCase):
         self.assertTrue(manager.update_user_password.called)
         args, kwargs = manager.update_user_password.call_args
         self.assertEqual(kwargs['plain_password'], '1234asdf')
-        self.assertRedirects(response, expected_url=urls.reverse('auth_services'), target_status_code=200)
+        self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
 
     @mock.patch(MODULE_PATH + '.views.SeatManager')
     def test_reset_password(self, manager):
@@ -188,7 +188,7 @@ class SeatViewsTestCase(TestCase):
 
         response = self.client.get(urls.reverse('auth_reset_seat_password'))
 
-        self.assertTemplateUsed(response, 'registered/service_credentials.html')
+        self.assertTemplateUsed(response, 'services/service_credentials.html')
         self.assertContains(response, 'some member')
         self.assertContains(response, 'hunter2')
 

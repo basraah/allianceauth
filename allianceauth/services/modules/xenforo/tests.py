@@ -123,7 +123,7 @@ class XenforoViewsTestCase(TestCase):
 
         self.assertTrue(manager.add_user.called)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed('registered/service_credentials.html')
+        self.assertTemplateUsed('services/service_credentials.html')
         self.assertContains(response, expected_username)
         xenforo_user = XenforoUser.objects.get(user=self.member)
         self.assertEqual(xenforo_user.username, expected_username)
@@ -138,7 +138,7 @@ class XenforoViewsTestCase(TestCase):
         response = self.client.get(urls.reverse('auth_deactivate_xenforo'))
 
         self.assertTrue(manager.disable_user.called)
-        self.assertRedirects(response, expected_url=urls.reverse('auth_services'), target_status_code=200)
+        self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
         with self.assertRaises(ObjectDoesNotExist):
             xenforo_user = User.objects.get(pk=self.member.pk).xenforo
 
@@ -152,7 +152,7 @@ class XenforoViewsTestCase(TestCase):
         self.assertTrue(manager.update_user_password.called)
         args, kwargs = manager.update_user_password.call_args
         self.assertEqual(args[1], '1234asdf')
-        self.assertRedirects(response, expected_url=urls.reverse('auth_services'), target_status_code=200)
+        self.assertRedirects(response, expected_url=urls.reverse('services:services'), target_status_code=200)
 
     @mock.patch(MODULE_PATH + '.views.XenForoManager')
     def test_reset_password(self, manager):
@@ -167,7 +167,7 @@ class XenforoViewsTestCase(TestCase):
         response = self.client.get(urls.reverse('auth_reset_xenforo_password'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'registered/service_credentials.html')
+        self.assertTemplateUsed(response, 'services/service_credentials.html')
         self.assertContains(response, 'some member')
         self.assertContains(response, 'hunter2')
 
