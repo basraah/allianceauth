@@ -1,6 +1,7 @@
 import logging
 from django.db import models, transaction
 from django.contrib.auth.models import Group, User
+from django.core.exceptions import ObjectDoesNotExist
 
 from allianceauth.authentication.models import State
 from allianceauth.eveonline.models import EveCorporationInfo, EveAllianceInfo
@@ -22,13 +23,15 @@ class AutogroupsConfigManager(models.Manager):
             for user in users:
                 config.update_group_membership(user)
 
-    def update_groups_for_user(self, state: State, user: User):
+    def update_groups_for_user(self, user: User, state: State = None):
         """
         Update the Group memberships for the given users state
         :param user: User to update for
         :param state: State to update user for
         :return:
         """
+        if state is None:
+            state = user.profile.state
         for config in self.filter(state=state):
                 config.update_group_membership(user)
 
@@ -41,7 +44,7 @@ class AutogroupsConfig(models.Model):
         (OPT_NAME, 'Full name'),
     )
 
-    state = models.ManyToManyField(State, related_name='autogroups')
+    states = models.ManyToManyField(State, related_name='autogroups')
 
     corp_groups = models.BooleanField(default=False,
                                       help_text="Setting this to false will delete all the created groups.")
@@ -79,43 +82,58 @@ class AutogroupsConfig(models.Model):
         self.update_alliance_group_membership(user)
         self.update_corp_group_membership(user)
 
+    def user_entitled_to_groups(self, user: User) -> bool:
+        try:
+            return user.profile.state in self.states.all()
+        except ObjectDoesNotExist:
+            return False
+
+    @transaction.atomic
     def update_alliance_group_membership(self, user: User):
-        with transaction.atomic():
-            self.remove_user_from_alliance_groups(user)  # TODO more efficient way of doing this
-            if not self.alliance_groups:
+        self.remove_user_from_alliance_groups(user)  # TODO more efficient way of doing this
+        if not self.alliance_groups or not self.user_entitled_to_groups(user):
+            return
+        try:
+            alliance = user.profile.main_character.alliance
+            if alliance is None:
                 return
-            try:
-                alliance = user.profile.main_character.alliance
-                if alliance is None:
-                    return
-                group = self.get_alliance_group(user.profile.main_character.alliance)
+            group = self.get_alliance_group(user.profile.main_character.alliance)
+            user.groups.add(group)
+        except EveAllianceInfo.DoesNotExist:
+            logger.warning('User {} main characters alliance does not exist in the database.'
+                           ' Group membership not updated'.format(user))
+        except AttributeError:
+            logger.warning('User {} does not have a main character. Group membership not updated'.format(user))
 
-                if not user.groups.filter(pk=group.pk).exists():
-                    user.groups.add(group)
-            except EveAllianceInfo.DoesNotExist:
-                logger.warning('User {} main characters Alliance does not exist in the database.'
-                               ' Group membership not updated'.format(user))
-
+    @transaction.atomic
     def update_corp_group_membership(self, user: User):
-        with transaction.atomic():
-            self.remove_user_from_corp_groups(user)  # TODO more efficient way of doing this
-            if not self.corp_groups:
-                return
-            try:
-                corp = user.profile.main_character.corporation
-                group = self.get_corp_group(corp)
+        self.remove_user_from_corp_groups(user)  # TODO more efficient way of doing this
+        if not self.corp_groups or not self.user_entitled_to_groups(user):
+            return
+        try:
+            corp = user.profile.main_character.corporation
+            group = self.get_corp_group(corp)
 
-                if not user.groups.filter(pk=group.pk).exists():
-                    user.groups.add(group)
-            except EveCorporationInfo.DoesNotExist:
-                logger.warning('User {} main characters Corporation does not exist in the database.'
-                               ' Group membership not updated'.format(user))
+            user.groups.add(group)
+        except EveCorporationInfo.DoesNotExist:
+            logger.warning('User {} main characters corporation does not exist in the database.'
+                           ' Group membership not updated'.format(user))
+        except AttributeError:
+            logger.warning('User {} does not have a main character. Group membership not updated'.format(user))
 
+    @transaction.atomic
     def remove_user_from_alliance_groups(self, user: User):
-        user.groups.intersect(self.alliance_managed_groups.groups.all()).remove()
+        # TODO: find a better way
+        remove_groups = user.groups.all().intersection(self.alliance_managed_groups.all())
+        for g in remove_groups:
+            user.groups.remove(g)
 
+    @transaction.atomic
     def remove_user_from_corp_groups(self, user: User):
-        user.groups.intersect(self.corp_managed_groups.groups.all()).remove()
+        # TODO: find a better way
+        remove_groups = user.groups.all().intersection(self.corp_managed_groups.all())
+        for g in remove_groups:
+            user.groups.remove(g)
 
     def get_alliance_group(self, alliance: EveAllianceInfo) -> Group:
         if alliance.alliance_id not in self._alliance_group_cache:
@@ -127,19 +145,19 @@ class AutogroupsConfig(models.Model):
             self._corp_group_cache[corp.corporation_id] = self.create_corp_group(corp)
         return self._corp_group_cache[corp.corporation_id]
 
+    @transaction.atomic
     def create_alliance_group(self, alliance: EveAllianceInfo) -> Group:
-        with transaction.atomic():
-            group, created = Group.objects.update_or_create(name=self.get_alliance_group_name(alliance))
-            if created:
-                ManagedAllianceGroup.objects.create(group=group, config=self, alliance=alliance)
-            return group
+        group, created = Group.objects.update_or_create(name=self.get_alliance_group_name(alliance))
+        if created:
+            ManagedAllianceGroup.objects.create(group=group, config=self, alliance=alliance)
+        return group
 
+    @transaction.atomic
     def create_corp_group(self, corp: EveCorporationInfo) -> Group:
-        with transaction.atomic():
-            group, created = Group.objects.update_or_create(name=self.get_corp_group_name(corp))
-            if created:
-                ManagedCorpGroup.objects.create(group=group, config=self, corp=corp)
-            return group
+        group, created = Group.objects.update_or_create(name=self.get_corp_group_name(corp))
+        if created:
+            ManagedCorpGroup.objects.create(group=group, config=self, corp=corp)
+        return group
 
     def delete_alliance_managed_groups(self):
         """
@@ -178,7 +196,7 @@ class AutogroupsConfig(models.Model):
         :return: name with spaces replaced with the configured character(s) or unchanged if configured
         """
         if self.replace_spaces:
-            return name.replace(' ', str(self.replace_spaces_with))
+            return name.strip().replace(' ', str(self.replace_spaces_with))
         return name
 
 
