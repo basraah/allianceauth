@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'allianceauth.authentication',
     'allianceauth.services',
     'allianceauth.eveonline',
+    'allianceauth.eveonline.autogroups',
     'allianceauth.groupmanagement',
     'allianceauth.hrapplications',
     'allianceauth.timerboard',
