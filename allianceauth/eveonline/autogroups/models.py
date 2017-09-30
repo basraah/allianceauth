@@ -9,7 +9,17 @@ from allianceauth.eveonline.models import EveCorporationInfo, EveAllianceInfo
 logger = logging.getLogger(__name__)
 
 
+def get_users_for_state(state: State):
+    return User.objects.select_related('profile').prefetch_related('profile__main_character')\
+            .filter(profile__state__pk=state.pk)
+
+
 class AutogroupsConfigManager(models.Manager):
+    def create(self, *args, **kwargs):
+        result = super(AutogroupsConfigManager, self).create(*args, **kwargs)
+        list(map(self.update_groups_for_state, result.states.all()))
+        return result
+
     def update_groups_for_state(self, state: State):
         """
         Update all the Group memberships for the users
@@ -17,11 +27,10 @@ class AutogroupsConfigManager(models.Manager):
         :param state: State to update for
         :return:
         """
-        users = User.objects.select_related('profile').fetch_related('profile__main_character')\
-            .filter(profile__state__pk=state.pk)
+        users = get_users_for_state(state)
         for config in self.filter(state=state):
             for user in users:
-                config.update_group_membership(user)
+                config.update_group_membership_for_user(user)
 
     def update_groups_for_user(self, user: User, state: State = None):
         """
@@ -33,7 +42,7 @@ class AutogroupsConfigManager(models.Manager):
         if state is None:
             state = user.profile.state
         for config in self.filter(state=state):
-                config.update_group_membership(user)
+                config.update_group_membership_for_user(user)
 
 
 class AutogroupsConfig(models.Model):
@@ -78,7 +87,10 @@ class AutogroupsConfig(models.Model):
         self._alliance_group_cache = dict()
         self._corp_group_cache = dict()
 
-    def update_group_membership(self, user: User):
+    def update_group_membership_for_state(self, state: State):
+        list(map(self.update_group_membership_for_user, get_users_for_state(state)))
+
+    def update_group_membership_for_user(self, user: User):
         self.update_alliance_group_membership(user)
         self.update_corp_group_membership(user)
 
