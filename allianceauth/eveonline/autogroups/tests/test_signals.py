@@ -10,7 +10,7 @@ from allianceauth.eveonline.models import EveCharacter, EveCorporationInfo, EveA
 
 from ..models import AutogroupsConfig, get_users_for_state
 
-
+from . import patch
 
 
 class SignalsTestCase(TestCase):
@@ -37,5 +37,6 @@ class SignalsTestCase(TestCase):
         state.member_alliances.add(self.alliance)
         state.member_corporations.add(self.corp)
 
+    @patch
     def test_profile_state_change(self):
         pass
