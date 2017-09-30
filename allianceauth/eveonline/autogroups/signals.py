@@ -1,7 +1,7 @@
 import logging
 from django.dispatch import receiver
-from django.db.models.signals import pre_save, post_save, pre_delete
-from allianceauth.authentication.models import UserProfile
+from django.db.models.signals import pre_save, post_save, pre_delete, m2m_changed
+from allianceauth.authentication.models import UserProfile, State
 from allianceauth.authentication.signals import state_changed
 from allianceauth.eveonline.models import EveCharacter
 
@@ -65,7 +65,7 @@ def check_groups_on_character_update(sender, instance, *args, **kwargs):
         pass
 
 
-@receiver(pre_save, sender=UserProfile)
+@receiver(post_save, sender=UserProfile)
 def check_groups_on_main_character_update(sender, instance, created, *args, **kwargs):
     """
     Trigger check when main character changes but state does not change.
@@ -76,3 +76,19 @@ def check_groups_on_main_character_update(sender, instance, created, *args, **kw
         update_fields = kwargs.pop('update_fields', []) or []
         if 'main_character' in update_fields:
             AutogroupsConfig.objects.update_groups_for_user(instance.user)
+
+
+@receiver(m2m_changed, sender=AutogroupsConfig.states.through)
+def autogroups_states_changed(sender, instance, action, reverse, model, pk_set, *args, **kwargs):
+    """
+    Trigger group membership update when a state is added or removed from
+    an autogroup config.
+    """
+    if action.startswith('post_'):
+        for pk in pk_set:
+            try:
+                state = State.objects.get(pk=pk)
+                instance.update_group_membership_for_state(state)
+            except State.DoesNotExist:
+                # Deleted States handled by the profile state change
+                pass
