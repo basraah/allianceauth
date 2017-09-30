@@ -1,28 +1,20 @@
 from django.test import TestCase
 from django.contrib.auth.models import Group
-from django.db.models.signals import pre_save, post_save, pre_delete, m2m_changed
 
 from allianceauth.tests.auth_utils import AuthUtils
 
 from allianceauth.eveonline.models import EveCharacter, EveCorporationInfo, EveAllianceInfo
-from allianceauth.authentication.models import UserProfile
-from allianceauth.authentication.signals import state_changed
 
 from ..models import AutogroupsConfig, get_users_for_state
-from .. import signals
 
-from . import patch
+
+from . import patch, connect_signals, disconnect_signals
 
 
 class AutogroupsConfigTestCase(TestCase):
     def setUp(self):
         # Disconnect signals
-        state_changed.disconnect(receiver=signals.profile_state_changed, sender=UserProfile)
-        pre_save.disconnect(receiver=signals.pre_save_config, sender=AutogroupsConfig)
-        pre_delete.disconnect(receiver=signals.pre_delete_config, sender=AutogroupsConfig)
-        post_save.disconnect(receiver=signals.check_groups_on_character_update, sender=EveCharacter)
-        post_save.disconnect(receiver=signals.check_groups_on_character_update, sender=UserProfile)
-        m2m_changed.disconnect(receiver=signals.autogroups_states_changed, sender=AutogroupsConfig.states.through)
+        disconnect_signals()
 
         self.member = AuthUtils.create_member('test user')
 
@@ -48,12 +40,7 @@ class AutogroupsConfigTestCase(TestCase):
 
     def tearDown(self):
         # Reconnect signals
-        state_changed.connect(receiver=signals.profile_state_changed, sender=UserProfile)
-        pre_save.connect(receiver=signals.pre_save_config, sender=AutogroupsConfig)
-        pre_delete.connect(receiver=signals.pre_delete_config, sender=AutogroupsConfig)
-        post_save.connect(receiver=signals.check_groups_on_character_update, sender=EveCharacter)
-        post_save.connect(receiver=signals.check_groups_on_character_update, sender=UserProfile)
-        m2m_changed.connect(receiver=signals.autogroups_states_changed, sender=AutogroupsConfig.states.through)
+        connect_signals()
 
     def test_get_users_for_state(self):
         result = get_users_for_state(self.member.profile.state)
