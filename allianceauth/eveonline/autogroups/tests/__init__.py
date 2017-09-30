@@ -18,7 +18,7 @@ def connect_signals():
     pre_save.connect(receiver=signals.pre_save_config, sender=AutogroupsConfig)
     pre_delete.connect(receiver=signals.pre_delete_config, sender=AutogroupsConfig)
     post_save.connect(receiver=signals.check_groups_on_character_update, sender=EveCharacter)
-    post_save.connect(receiver=signals.check_groups_on_character_update, sender=UserProfile)
+    post_save.connect(receiver=signals.check_groups_on_main_character_update, sender=UserProfile)
     m2m_changed.connect(receiver=signals.autogroups_states_changed, sender=AutogroupsConfig.states.through)
 
 
@@ -27,5 +27,5 @@ def disconnect_signals():
     pre_save.disconnect(receiver=signals.pre_save_config, sender=AutogroupsConfig)
     pre_delete.disconnect(receiver=signals.pre_delete_config, sender=AutogroupsConfig)
     post_save.disconnect(receiver=signals.check_groups_on_character_update, sender=EveCharacter)
-    post_save.disconnect(receiver=signals.check_groups_on_character_update, sender=UserProfile)
+    post_save.disconnect(receiver=signals.check_groups_on_main_character_update, sender=UserProfile)
     m2m_changed.disconnect(receiver=signals.autogroups_states_changed, sender=AutogroupsConfig.states.through)
