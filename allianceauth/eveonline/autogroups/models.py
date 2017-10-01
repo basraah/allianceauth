@@ -84,8 +84,6 @@ class AutogroupsConfig(models.Model):
 
     def __init__(self, *args, **kwargs):
         super(AutogroupsConfig, self).__init__(*args, **kwargs)
-        self._alliance_group_cache = dict()
-        self._corp_group_cache = dict()
 
     def update_group_membership_for_state(self, state: State):
         list(map(self.update_group_membership_for_user, get_users_for_state(state)))
@@ -142,31 +140,25 @@ class AutogroupsConfig(models.Model):
 
     @transaction.atomic
     def remove_user_from_corp_groups(self, user: User):
-        # TODO: find a better way
         remove_groups = user.groups.all().intersection(self.corp_managed_groups.all())
-        for g in remove_groups:
-            user.groups.remove(g)
+        list(map(user.groups.remove, remove_groups))
 
     def get_alliance_group(self, alliance: EveAllianceInfo) -> Group:
-        if alliance.alliance_id not in self._alliance_group_cache:
-            self._alliance_group_cache[alliance.alliance_id] = self.create_alliance_group(alliance)
-        return self._alliance_group_cache[alliance.alliance_id]
+        return self.create_alliance_group(alliance)
 
     def get_corp_group(self, corp: EveCorporationInfo) -> Group:
-        if corp.corporation_id not in self._corp_group_cache:
-            self._corp_group_cache[corp.corporation_id] = self.create_corp_group(corp)
-        return self._corp_group_cache[corp.corporation_id]
+        return self.create_corp_group(corp)
 
     @transaction.atomic
     def create_alliance_group(self, alliance: EveAllianceInfo) -> Group:
-        group, created = Group.objects.update_or_create(name=self.get_alliance_group_name(alliance))
+        group, created = Group.objects.get_or_create(name=self.get_alliance_group_name(alliance))
         if created:
             ManagedAllianceGroup.objects.create(group=group, config=self, alliance=alliance)
         return group
 
     @transaction.atomic
     def create_corp_group(self, corp: EveCorporationInfo) -> Group:
-        group, created = Group.objects.update_or_create(name=self.get_corp_group_name(corp))
+        group, created = Group.objects.get_or_create(name=self.get_corp_group_name(corp))
         if created:
             ManagedCorpGroup.objects.create(group=group, config=self, corp=corp)
         return group
