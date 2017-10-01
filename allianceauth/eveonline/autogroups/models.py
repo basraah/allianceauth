@@ -41,7 +41,7 @@ class AutogroupsConfigManager(models.Manager):
         """
         if state is None:
             state = user.profile.state
-        for config in self.filter(state=state):
+        for config in self.filter(states=state):
                 config.update_group_membership_for_user(user)
 
 
