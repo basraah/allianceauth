@@ -1,7 +1,5 @@
 import logging
 from django.db import models, transaction
-from django.db.models import F, CharField
-from django.db.models.functions import Concat
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist
 
