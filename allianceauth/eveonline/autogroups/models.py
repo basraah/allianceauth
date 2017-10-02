@@ -187,16 +187,16 @@ class AutogroupsConfig(models.Model):
         elif self.alliance_name_source == self.OPT_NAME:
             name = alliance.alliance_name
         else:
-            raise AttributeError('Not a valid name source')
+            raise NameSourceException('Not a valid name source')
         return self._replace_spaces(self.alliance_group_prefix + name)
 
     def get_corp_group_name(self, corp: EveCorporationInfo) -> str:
         if self.corp_name_source == self.OPT_TICKER:
             name = corp.corporation_ticker
-        elif self.alliance_name_source == self.OPT_NAME:
+        elif self.corp_name_source == self.OPT_NAME:
             name = corp.corporation_name
         else:
-            raise AttributeError('Not a valid name source')
+            raise NameSourceException('Not a valid name source')
         return self._replace_spaces(self.corp_group_prefix + name)
 
     def _replace_spaces(self, name: str) -> str:
@@ -221,3 +221,7 @@ class ManagedCorpGroup(ManagedGroup):
 
 class ManagedAllianceGroup(ManagedGroup):
     alliance = models.ForeignKey(EveAllianceInfo, on_delete=models.CASCADE)
+
+
+class NameSourceException(Exception):
+    pass
