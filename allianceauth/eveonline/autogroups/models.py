@@ -1,5 +1,7 @@
 import logging
 from django.db import models, transaction
+from django.db.models import F, CharField
+from django.db.models.functions import Concat
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -82,6 +84,15 @@ class AutogroupsConfig(models.Model):
     def __init__(self, *args, **kwargs):
         super(AutogroupsConfig, self).__init__(*args, **kwargs)
 
+    def __repr__(self):
+        return self.__class__.__name__
+
+    def __str__(self):
+        return 'States: ' + (' '.join(list(self.states.all().values_list('name', flat=True))) if self.pk else str(None))
+
+    def update_all_states_group_membership(self):
+        list(map(self.update_group_membership_for_state, self.states.all()))
+
     def update_group_membership_for_state(self, state: State):
         list(map(self.update_group_membership_for_user, get_users_for_state(state)))
 
@@ -132,13 +143,12 @@ class AutogroupsConfig(models.Model):
     @transaction.atomic
     def remove_user_from_alliance_groups(self, user: User):
         # TODO: find a better way
-        remove_groups = user.groups.all().intersection(self.alliance_managed_groups.all())
-        for g in remove_groups:
-            user.groups.remove(g)
+        remove_groups = user.groups.filter(pk__in=self.alliance_managed_groups.all().values_list('pk', flat=True))
+        list(map(user.groups.remove, remove_groups))
 
     @transaction.atomic
     def remove_user_from_corp_groups(self, user: User):
-        remove_groups = user.groups.all().intersection(self.corp_managed_groups.all())
+        remove_groups = user.groups.filter(pk__in=self.corp_managed_groups.all().values_list('pk', flat=True))
         list(map(user.groups.remove, remove_groups))
 
     def get_alliance_group(self, alliance: EveAllianceInfo) -> Group:
