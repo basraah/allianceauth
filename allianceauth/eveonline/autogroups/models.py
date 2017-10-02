@@ -15,11 +15,6 @@ def get_users_for_state(state: State):
 
 
 class AutogroupsConfigManager(models.Manager):
-    def create(self, *args, **kwargs):
-        result = super(AutogroupsConfigManager, self).create(*args, **kwargs)
-        list(map(self.update_groups_for_state, result.states.all()))
-        return result
-
     def update_groups_for_state(self, state: State):
         """
         Update all the Group memberships for the users
@@ -28,8 +23,10 @@ class AutogroupsConfigManager(models.Manager):
         :return:
         """
         users = get_users_for_state(state)
-        for config in self.filter(state=state):
+        for config in self.filter(states=state):
+            logger.debug("in state loop")
             for user in users:
+                logger.debug("in user loop for {}".format(user))
                 config.update_group_membership_for_user(user)
 
     def update_groups_for_user(self, user: User, state: State = None):
@@ -88,6 +85,7 @@ class AutogroupsConfig(models.Model):
     def update_group_membership_for_state(self, state: State):
         list(map(self.update_group_membership_for_user, get_users_for_state(state)))
 
+    @transaction.atomic
     def update_group_membership_for_user(self, user: User):
         self.update_alliance_group_membership(user)
         self.update_corp_group_membership(user)
