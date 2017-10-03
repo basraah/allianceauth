@@ -1,6 +1,17 @@
 from django.contrib import admin
 from .models import AutogroupsConfig
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
+def sync_nickname(modeladmin, request, queryset):
+    for agc in queryset:
+        logger.debug("update_all_states_group_membership for {}".format(agc))
+        agc.update_all_states_group_membership()
+
 
 class AutogroupsConfigAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
@@ -11,6 +22,13 @@ class AutogroupsConfigAdmin(admin.ModelAdmin):
             ]
         else:
             return []
+
+    def get_actions(self, request):
+        actions = super(AutogroupsConfigAdmin, self).get_actions(request)
+        actions['sync_user_groups'] = (sync_nickname,
+                                       'sync_user_groups',
+                                       'Sync all users groups for this Autogroup Config')
+        return actions
 
 
 admin.site.register(AutogroupsConfig, AutogroupsConfigAdmin)
