@@ -107,46 +107,57 @@ class AutogroupsConfig(models.Model):
 
     @transaction.atomic
     def update_alliance_group_membership(self, user: User):
-        self.remove_user_from_alliance_groups(user)  # TODO more efficient way of doing this
-        if not self.alliance_groups or not self.user_entitled_to_groups(user):
-            return
+        group = None
         try:
-            alliance = user.profile.main_character.alliance
-            if alliance is None:
+            if not self.alliance_groups or not self.user_entitled_to_groups(user):
+                logger.debug('User {} does not have required state'.format(user))
                 return
-            group = self.get_alliance_group(user.profile.main_character.alliance)
-            user.groups.add(group)
+            else:
+                alliance = user.profile.main_character.alliance
+                if alliance is None:
+                    return
+                group = self.get_alliance_group(alliance)
         except EveAllianceInfo.DoesNotExist:
             logger.warning('User {} main characters alliance does not exist in the database.'
                            ' Group membership not updated'.format(user))
         except AttributeError:
             logger.warning('User {} does not have a main character. Group membership not updated'.format(user))
+        finally:
+            self.remove_user_from_corp_groups(user, except_group=group)
+            if group is not None:
+                user.groups.add(group)
 
     @transaction.atomic
     def update_corp_group_membership(self, user: User):
-        self.remove_user_from_corp_groups(user)  # TODO more efficient way of doing this
-        if not self.corp_groups or not self.user_entitled_to_groups(user):
-            return
+        group = None
         try:
-            corp = user.profile.main_character.corporation
-            group = self.get_corp_group(corp)
-
-            user.groups.add(group)
+            if not self.corp_groups or not self.user_entitled_to_groups(user):
+                logger.debug('User {} does not have required state'.format(user))
+            else:
+                corp = user.profile.main_character.corporation
+                group = self.get_corp_group(corp)
         except EveCorporationInfo.DoesNotExist:
             logger.warning('User {} main characters corporation does not exist in the database.'
                            ' Group membership not updated'.format(user))
         except AttributeError:
             logger.warning('User {} does not have a main character. Group membership not updated'.format(user))
+        finally:
+            self.remove_user_from_corp_groups(user, except_group=group)
+            if group is not None:
+                user.groups.add(group)
 
     @transaction.atomic
-    def remove_user_from_alliance_groups(self, user: User):
-        # TODO: find a better way
+    def remove_user_from_alliance_groups(self, user: User, except_group: Group = None):
         remove_groups = user.groups.filter(pk__in=self.alliance_managed_groups.all().values_list('pk', flat=True))
+        if except_group is not None:
+            remove_groups = remove_groups.exclude(pk=except_group.pk)
         list(map(user.groups.remove, remove_groups))
 
     @transaction.atomic
-    def remove_user_from_corp_groups(self, user: User):
+    def remove_user_from_corp_groups(self, user: User, except_group: Group = None):
         remove_groups = user.groups.filter(pk__in=self.corp_managed_groups.all().values_list('pk', flat=True))
+        if except_group is not None:
+            remove_groups = remove_groups.exclude(pk=except_group.pk)
         list(map(user.groups.remove, remove_groups))
 
     def get_alliance_group(self, alliance: EveAllianceInfo) -> Group:
