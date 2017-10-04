@@ -14,3 +14,18 @@
 @brand-success:         #5cb85c;
 @brand-warning:         #f0ad4e;
 @brand-danger:          #d9534f;
+
+
+// Bootstrap extension, allow vertical columns to be same height
+.row.vertical-flexbox-row {
+  display:  -webkit-box;
+  display: -webkit-flex;
+  display:  -ms-flexbox;
+  display:         flex;
+  flex-wrap: wrap;
+}
+
+.row.vertical-flexbox-row > [class*='col-'] {
+  display: flex;
+  flex-direction: column;
+}
