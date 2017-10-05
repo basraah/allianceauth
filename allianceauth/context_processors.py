@@ -6,5 +6,5 @@ def auth_settings(request):
     return {
         'DOMAIN': settings.DOMAIN,
         'SITE_NAME': settings.SITE_NAME,
-        'NIGHT_MODE': request.session.get(NightModeRedirectView.SESSION_VAR, False)
+        'NIGHT_MODE': NightModeRedirectView.night_mode_state(request),
     }
