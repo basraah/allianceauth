@@ -11,4 +11,9 @@ class NightModeRedirectView(View):
 
     @classmethod
     def night_mode_state(cls, request):
-        return request.session.get(cls.SESSION_VAR, False)
+        try:
+            return request.session.get(cls.SESSION_VAR, False)
+        except AttributeError:
+            # Session is middleware
+            # Sometimes request wont have a session attribute
+            return False
