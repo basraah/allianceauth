@@ -2,7 +2,9 @@ import requests
 import logging
 import semantic_version as semver
 from django import template
+from django.conf import settings
 from django.core.cache import cache
+from allianceauth.celeryapp import app
 from allianceauth import __version__
 
 register = template.Library()
@@ -37,16 +39,47 @@ def status_overview(context):
         'latest_minor': True,
         'latest_patch': True,
         'current_version': __version__,
+        'task_queue_length': -1,
     }
 
+    response.update(get_notifications())
+    response.update(get_version_info())
+    response.update({'task_queue_length': get_celery_queue_length()})
+
+    return response
+
+
+def get_celery_queue_length():
+    try:
+        with app.connection_or_acquire() as conn:
+            return conn.default_channel.queue_declare(
+                queue=getattr(settings, 'CELERY_DEFAULT_QUEUE', 'celery'), passive=True).message_count
+    except Exception:
+        logger.exception("Failed to get celery queue length")
+    return -1
+
+
+def get_notifications():
+    response = {
+        'notifications': list(),
+    }
     try:
         notifications = cache.get_or_set('github_notification_issues', get_github_notification_issues,
                                          NOTIFICATION_CACHE_TIME)
         # Limit notifications to those posted by repo owners and members
-        response['notifications'] += [n for n in notifications if n['author_association'] in ['OWNER', 'MEMBER']][:6]
+        response['notifications'] += [n for n in notifications if n['author_association'] in ['OWNER', 'MEMBER']][:5]
     except requests.RequestException:
         logger.exception('Error while getting github notifications')
+    return response
 
+
+def get_version_info():
+    response = {
+        'latest_major': True,
+        'latest_minor': True,
+        'latest_patch': True,
+        'current_version': __version__,
+    }
     try:
         tags = cache.get_or_set('github_release_tags', get_github_tags, TAG_CACHE_TIME)
         current_ver = semver.Version(__version__, partial=True)
@@ -94,5 +127,4 @@ def status_overview(context):
 
     except requests.RequestException:
         logger.exception('Error while getting github release tags')
-
     return response
