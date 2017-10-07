@@ -1,7 +1,9 @@
 from django.conf.urls import include, url
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
+from string import Formatter
 
 from allianceauth.hooks import get_hooks
 
@@ -143,54 +145,50 @@ class NameFormatter:
         """
         :return: str Generated name
         """
+        format_data = self.get_format_data()
+        return Formatter().vformat(self.string_formatter, args=[], kwargs=format_data)
 
-        # Get data
+    def get_format_data(self):
         main_char = getattr(self.user.profile, 'main_character', None)
-        formatter = self._formatter
 
         format_data = {
             'character_name': getattr(main_char, 'character_name',
-                                      self.user.username if self._default_to_username() else None),
+                                      self.user.username if self._default_to_username else None),
             'character_id': getattr(main_char, 'character_id', None),
             'corp_ticker': getattr(main_char, 'corporation_ticker', None),
             'corp_name': getattr(main_char, 'corporation_name', None),
             'corp_id': getattr(main_char, 'corporation_id', None),
             'alliance_name': getattr(main_char, 'alliance_name', None),
-            'alliance_ticker': None,
             'alliance_id': getattr(main_char, 'alliance_id', None),
             'username': self.user.username,
         }
 
-        if main_char is not None and 'alliance_ticker' in formatter:
-            format_data['alliance_ticker'] = getattr(getattr(main_char, 'alliance', None), 'alliance_ticker', None)
+        if main_char is not None and 'alliance_ticker' in self.string_formatter:
+            # Reduces db lookups
+            try:
+                format_data['alliance_ticker'] = getattr(getattr(main_char, 'alliance', None), 'alliance_ticker', None)
+            except ObjectDoesNotExist:
+                format_data['alliance_ticker'] = None
+        return format_data
 
-        return formatter.format(**format_data)
-
-    def _formatter_config(self, user):
+    @cached_property
+    def formatter_config(self):
         format_config = NameFormatConfig.objects.filter(service_name=self.service.name,
-                                                        states__pk=user.profile.state)
+                                                        states__pk=self.user.profile.state.pk)
 
-        if format_config.exists:
+        if format_config.exists():
             return format_config[0]
         return None
 
     @cached_property
-    def _formatter(self):
+    def string_formatter(self):
         """
         Try to get the config format first
         Then the service default
         Before finally defaulting to global default
         :return: str
         """
-        fallback_format = self.default_formatter
-
-        format_config = self._formatter_config
-
-        if format_config is not None:
-            return getattr(format_config, 'format', fallback_format)
-        else:
-            # No formatter
-            return fallback_format
+        return getattr(self.formatter_config, 'format', self.default_formatter)
 
     @cached_property
     def default_formatter(self):
@@ -203,4 +201,4 @@ class NameFormatter:
         Default is True
         :return: bool
         """
-        return getattr(self._formatter_config, 'default_to_username', True)
+        return getattr(self.formatter_config, 'default_to_username', True)
