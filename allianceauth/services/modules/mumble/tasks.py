@@ -30,7 +30,7 @@ class MumbleTasks:
     @staticmethod
     def get_username(user):
         from .auth_hooks import MumbleService
-        return NameFormatter(MumbleService()).format_name(user)
+        return NameFormatter(MumbleService(), user).format_name()
 
     @staticmethod
     @app.task(bind=True, name="mumble.update_groups")

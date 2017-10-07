@@ -1,8 +1,11 @@
 from django.conf.urls import include, url
 from django.template.loader import render_to_string
+from django.utils.functional import cached_property
 from django.conf import settings
 
 from allianceauth.hooks import get_hooks
+
+from .models import NameFormatConfig
 
 
 class ServicesHook:
@@ -124,34 +127,30 @@ class UrlHook:
     def __init__(self, urls, namespace, base_url):
         self.include_pattern = url(base_url, include(urls, namespace=namespace))
 
-class NameFormatter:
 
+class NameFormatter:
     DEFAULT_FORMAT = getattr(settings, "DEFAULT_SERVICE_NAME_FORMAT", '[{corp_ticker}] {character_name}')
 
-    def __init__(self, service):
+    def __init__(self, service, user):
         """
         :param service: ServicesHook of the service to generate the name for.
+        :param user: django.contrib.auth.models.User to format name for
         """
         self.service = service
+        self.user = user
 
-        try:
-            self.format_config = NameFormatConfig.objects.get(service_name=self.service.name)
-        except NameFormatConfig.DoesNotExist:
-            self.format_config = None
-
-    def format_name(self, user):
+    def format_name(self):
         """
-        :param user: django.contrib.auth.models.User to generate name for
         :return: str Generated name
         """
 
         # Get data
-        main_char = EveManager.get_main_character(user)
-        formatter = self._get_formatter(main_char)
+        main_char = getattr(self.user.profile, 'main_character', None)
+        formatter = self._formatter
 
         format_data = {
             'character_name': getattr(main_char, 'character_name',
-                                      user.username if self._default_to_username() else None),
+                                      self.user.username if self._default_to_username() else None),
             'character_id': getattr(main_char, 'character_id', None),
             'corp_ticker': getattr(main_char, 'corporation_ticker', None),
             'corp_name': getattr(main_char, 'corporation_name', None),
@@ -159,39 +158,49 @@ class NameFormatter:
             'alliance_name': getattr(main_char, 'alliance_name', None),
             'alliance_ticker': None,
             'alliance_id': getattr(main_char, 'alliance_id', None),
-            'username': user.username,
+            'username': self.user.username,
         }
 
         if main_char is not None and 'alliance_ticker' in formatter:
-            format_data['alliance_ticker'] = EveManager.get_alliance(main_char.alliance_id).ticker
+            format_data['alliance_ticker'] = getattr(getattr(main_char, 'alliance', None), 'alliance_ticker', None)
 
         return formatter.format(**format_data)
 
-    def _get_formatter(self, character):
+    def _formatter_config(self, user):
+        format_config = NameFormatConfig.objects.filter(service_name=self.service.name,
+                                                        states__pk=user.profile.state)
+
+        if format_config.exists:
+            return format_config[0]
+        return None
+
+    @cached_property
+    def _formatter(self):
         """
         Try to get the config format first
         Then the service default
         Before finally defaulting to global default
-        :param character: EveCharacter
         :return: str
         """
-        fallback_format = self._get_default_formatter()
-        if character is not None and character.in_organisation():
-            # Has a character, and is in organisation
-            return getattr(self.format_config, 'format', fallback_format)
-        else:
-            # No character or not in organisation
-            # Try to use nontenant format first, otherwise use the format and then other defaults
-            return getattr(self.format_config, 'nontenant_format',
-                           getattr(self.format_config, 'format', fallback_format))
+        fallback_format = self.default_formatter
 
-    def _get_default_formatter(self):
+        format_config = self._formatter_config
+
+        if format_config is not None:
+            return getattr(format_config, 'format', fallback_format)
+        else:
+            # No formatter
+            return fallback_format
+
+    @cached_property
+    def default_formatter(self):
         return getattr(self.service, 'name_format', self.DEFAULT_FORMAT)
 
+    @cached_property
     def _default_to_username(self):
         """
         Default to a users username if they have no main character.
         Default is True
         :return: bool
         """
-        return getattr(self.format_config, 'default_to_username', True)
+        return getattr(self._formatter_config, 'default_to_username', True)
