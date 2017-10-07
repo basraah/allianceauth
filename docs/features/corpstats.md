@@ -29,33 +29,48 @@ If it fails an error message will be displayed.
 
 This bar contains a dropdown menu of all available corps. If the user has the `add_corpstats` permission, a button to add a Corp Stats will be shown.
 
-On the right of this bar is a search field. Press enter to search. It checks all characters in all Corp Stats you have view permission to and returns search results. Generic searches (such as 'a') will be slow.
-
-### API Index
-
-![API Index](/_static/images/features/corpstats/api_index.png)
-
-This is a visual indication of the number of registered characters.
+On the right of this bar is a search field. Press enter to search. It checks all characters in all Corp Stats you have view permission to and returns search results.
 
 ### Last Update
 
 ![last update and update button](/_static/images/features/corpstats/last_update.png)
 
-Corp Stats do not automatically update. They update once upon creation for initial data, and whenever someone presses the update button.
+Corp Stats automatically update every 6 hours. An update can be performed immediately by pressing thi update button.
 
-Only superusers and the creator of the Corp Stat can update it.
+Only superusers and the creator of the Corp Stat can trigger an immediate update.
 
-### Member List
+### Character Lists
+
+![lists](/_static/images/features/corpstats/lists.png)
+
+Three views are available:
+ - main characters and their alts
+ - registered characters and their main character
+ - unregistered characters
+
+Each view contains a sortable and searchable table. The number of listings shown can be increased with a dropdown selector. Pages can be changed using the controls on the bottom-right of the table. Each list is searchable at the top-right. Tables can be re-ordered by clicking on column headings.
+
+![table control locations](/_static/images/features/corpstats/table_controls.png)
+
+#### Main List
+
+![main list](/_static/images/features/corpstats/main_list.png)
+
+This list contains all main characters in registered in the selected corporation and their alts. Each character has a link to [zKillboard](https://zkillboard.com).
+
+
+#### Member List
 
 ![member list](/_static/images/features/corpstats/member_list.png)
 
-The list contains all characters in the corp. Red backgrounds means they are not registered in auth. If registered, and the user has the required permission to view APIs, a link to JackKnife will be present.
-A link to zKillboard is present for all characters.
+The list contains all characters in the corp. Red backgrounds means they are not registered in auth. A link to [zKillboard](https://zkillboard.com) is present for all characters.
 If registered, the character will also have a main character, main corporation, and main alliance field.
 
-This view is paginated: use the navigation arrows to view more pages (sorted alphabetically by character name), or search for a specific character.
+#### Unregistered List
 
-![pagination buttons](/_static/images/features/corpstats/pagination.png)
+![unregistered_list](/_static/images/features/corpstats/unregistered_list.png)
+
+This list contains all characters not registered on auth. Each character has a link to [zKillboard](https://zkillboard.com).
 
 ## Search View
 
@@ -65,7 +80,6 @@ This view is essentially the same as the Corp Stats page, but not specific to a 
 The search query is visible in the search box.
 Characters from all Corp Stats to which the user has view access will be displayed. APIs respect permissions.
 
-This view is paginated: use the navigation arrows to view more pages (sorted alphabetically by character name).
 
 ## Permissions
 
@@ -75,17 +89,11 @@ To use this feature, users will require some of the following:
 +---------------------------------------+------------------+----------------------------------------------------+
 | Permission                            | Admin Site       | Auth Site                                          |
 +=======================================+==================+====================================================+
-| corpstats.corp_apis                   | None             | Can view API keys of members of their corporation. |
-+---------------------------------------+------------------+----------------------------------------------------+
-| corpstats.alliance_apis               | None             | Can view API keys of members of their alliance.    |
-+---------------------------------------+------------------+----------------------------------------------------+
-| corpstats.blue_apis                   | None             | Can view API keys of members of blue corporations. |
-+---------------------------------------+------------------+----------------------------------------------------+
 | corpstats.view_corp_corpstats         | None             | Can view corp stats of their corporation.          |
 +---------------------------------------+------------------+----------------------------------------------------+
 | corpstats.view_alliance_corpstats     | None             | Can view corp stats of members of their alliance.  |
 +---------------------------------------+------------------+----------------------------------------------------+
-| corpstats.view_blue_corpstats         | None             | Can view corp stats of blue corporations.          |
+| corpstats.view_state_corpstats        | None             | Can view corp stats of members of their auth state.|
 +---------------------------------------+------------------+----------------------------------------------------+
 | corpstats.add_corpstats               | Can create model | Can add new corpstats using an SSO token.          |
 +---------------------------------------+------------------+----------------------------------------------------+
@@ -96,8 +104,7 @@ To use this feature, users will require some of the following:
 
 ```
 
-Typical use-cases would see the bundling of `corp_apis` and `view_corp_corpstats`, same for alliances and blues.
-Alliance permissions supersede corp permissions. Note that these evaluate against the user's main character.
+Users who add a Corp Stats with their token will be granted permissions to view it regardless of the above permissions. View permissions are interpreted in the "OR" sense: a user can view their corp's Corp Stats without the `view_corp_corpstats` permission if they have the `view_alliance_corpstats` permission, same idea for their state. Note that these evaluate against the user's main character.
 
 ## Troubleshooting
 
@@ -124,7 +131,7 @@ Any of the following errors will result in a notification to the owning user, an
 
 This occurs when the SSO token is invalid, which can occur when deleted by the user, the character is transferred between accounts, or the API is having a bad day.
 
->CorpStats for corp_name cannot update with your ESI token as you have left corp.
+>CorpStats for (corp name) cannot update with your ESI token as you have left corp.
 
 The SSO token's character is no longer in the corp which the Corp Stats is for, and therefore membership data cannot be retrieved.
 

@@ -1,0 +1,208 @@
+{% extends "allianceauth/base.html" %}
+{% load bootstrap %}
+{% load staticfiles %}
+{% load i18n %}
+
+{% load humanize %}
+{% block title %}Alliance Auth{% endblock %}
+
+{% block page_title %}Srp Fleet Data{% endblock page_title %}
+{% block extra_css %}
+  {% include 'bundles/x-editable.css.html' %}
+  <link href="{% static 'css/checkbox.css' %}" rel="stylesheet" type="text/css">
+  <style>
+  .radio label, .checkbox label {
+      padding-left: 10px;
+  }
+  .editable {
+    width:150px;
+    text-align: center;
+  }
+  .editableform .form-control {
+      width: 95%;
+      text-align: center;
+      margin-left: 10px;
+  }
+
+  .editable-input {
+      width: 95%;
+  }
+  .radio, .checkbox {
+      margin-top: 0px;
+      margin-bottom: 0px;
+  }
+  .editable-error-block {
+      white-space: nowrap;
+  }
+  .editable-click, a.editable-click, a.editable-click:hover {
+      border-bottom: none;
+  }
+  .tooltip-inner {
+    white-space:pre;
+    max-width: none;
+  }
+  </style>
+{% endblock extra_css %}
+
+{% block content %}
+    <div class="col-lg-12">
+        <div class="row">
+            <h1 class="page-header text-center">{% trans "SRP Fleet Data" %}
+                <div class="text-right">
+                    {% if perms.auth.srp_management %}
+                        {% if fleet_status == "Completed" %}
+                            <a href="{% url 'srp:mark_uncompleted' fleet_id %}" class="btn btn-warning">
+                                {% trans "Mark Incomplete" %}
+                            </a>
+                        {% else %}
+                            <a href="{% url 'srp:mark_completed' fleet_id %}" class="btn btn-success">
+                                {% trans "Mark Completed" %}
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </h1>
+            
+            {% if srpfleetrequests %}
+            <form method="POST">
+                {% csrf_token %}
+                <div class="alert alert-info" role="alert">
+                    <div class="text-right">
+                        <b><span style="padding-right:2.5em">{% trans "Total Losses:" %} {{ srpfleetrequests.count }}</span></b>
+                        <b><span style="padding-right:2.5em">{% trans "Total ISK Cost:" %} {{ totalcost | intcomma }}</span></b>
+                        {% if perms.auth.srp_management %}
+                            <button type="submit" title="Approve" class="btn btn-success" formaction="{% url 'srp:request_approve' %}">
+                                <span class="glyphicon glyphicon-ok"></span>
+                            </button>
+                            <button type="submit" title="Reject" class="btn btn-warning" formaction="{% url 'srp:request_reject' %}">
+                                <span class="glyphicon glyphicon-remove"></span>
+                            </button>
+                            <button type="submit" title="Remove" onclick="return confirm('{% trans "Are you sure you want to delete SRP requests?" %}')" class="btn btn-danger" formaction="{% url 'srp:request_remove' %}">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            
+                <table class="table">
+                    <tr>
+                        <th class="text-center">{% trans "Pilot Name" %}</th>
+                        <th class="text-center">{% trans "Killboard Link" %}</th>
+                        <th class="text-center">{% trans "Additional Info" %}</th>
+                        <th class="text-center">{% trans "Ship Type" %}</th>
+                        <th class="text-center">{% trans "Killboard Loss Amt" %}</th>
+                        <th class="text-center">{% trans "SRP ISK Cost" %}
+                        {% blocktrans %}<i class="glyphicon glyphicon-question-sign" rel="tooltip" title="Click value to edit
+Enter to save&next
+ESC to cancel"
+                        id="blah"></i></th>{% endblocktrans %}
+                        <th class="text-center">{% trans "Post Time" %}</th>
+                        <th class="text-center">{% trans "Status" %}</th>
+                        {% if perms.auth.srp_management %}
+                            <th class="text-center">{% trans "Actions" %}</th>
+                        {% endif %}
+                    </tr>
+                    {% for srpfleetrequest in srpfleetrequests %}
+                        <tr>
+                            <td class="text-center">{{ srpfleetrequest.character.character_name }}</td>
+                            <td class="text-center">
+                                <a href="{{ srpfleetrequest.killboard_link }}"
+                                   target="_blank" class="label label-warning">Link</a>
+                            </td>
+                            <td class="text-center">{{ srpfleetrequest.additional_info }}</td>
+                            <td class="text-center">{{ srpfleetrequest.srp_ship_name }}</td>
+                            <td class="text-center">{{ srpfleetrequest.kb_total_loss | intcomma }} ISK</td>
+                            <td class="srp" data-name="srp_total_amount" data-type="number" data-pk="{{srpfleetrequest.id}}" data-url="{% url 'srp:request_update_amount' srpfleetrequest.id %}" data-params="{csrfmiddlewaretoken:'{{csrf_token}}'}" class="text-center">{{ srpfleetrequest.srp_total_amount | intcomma }} ISK</td>
+                            <td class="text-center">{{ srpfleetrequest.post_time | date:"Y-m-d H:i" }}</td>
+                            <td class="text-center">
+                                {% if srpfleetrequest.srp_status == "Approved" %}
+                                    <div class="label label-success">
+                                        {% trans "Approved" %}
+                                    </div>
+                                {% elif srpfleetrequest.srp_status == "Rejected" %}
+                                    <div class="label label-danger">
+                                        {% trans "Rejected" %}
+                                    </div>
+                                {% else %}
+                                    <div class="label label-warning">
+                                        {% trans "Pending" %}
+                                    </div>
+                                {% endif %}
+                            </td>
+                            {% if perms.auth.srp_management %}
+                                <td class="text-center">
+                                    <div class="checkbox">
+                                        <label style="font-size: 1.5em">
+                                            <input type="checkbox" name="{{srpfleetrequest.id}}">
+                                            <span class="cr"><i class="cr-icon fa fa-check"></i></span>
+                                        </label>
+                                    </div>                            
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}   
+                </table>
+                <div class="alert alert-info" role="alert">
+                    <div class="text-right">
+                        <b><span style="padding-right:2.5em">{% trans "Total Losses:" %} {{ srpfleetrequests.count }}</span></b>
+                        <b><span style="padding-right:2.5em">{% trans "Total ISK Cost:" %} {{ totalcost | intcomma }}</span></b>
+                        {% if perms.auth.srp_management %}
+                            <button type="submit" title="Approve" class="btn btn-success" formaction="{% url 'srp:request_approve' %}">
+                                <span class="glyphicon glyphicon-ok"></span>
+                            </button>
+                            <button type="submit" title="Reject" class="btn btn-warning" formaction="{% url 'srp:request_reject' %}">
+                                <span class="glyphicon glyphicon-remove"></span>
+                            </button>
+                            <button type="submit" title="Remove" onclick="return confirm('{% trans "Are you sure you want to delete SRP requests?" %}')" class="btn btn-danger" formaction="{% url 'srp:request_remove' %}">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+            {% else %}
+            <div class="alert alert-warning text-center">{% trans "No SRP requests for this fleet." %}</div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock content %}
+
+{% block extra_javascript %}
+    {% include 'bundles/x-editable-js.html' %}
+{% endblock %}
+
+{% block extra_script %}
+  $(document).ready(function() {
+      $.fn.editable.defaults.mode = 'inline';
+      $.fn.editable.defaults.showbuttons = false;
+      $.fn.editable.defaults.highlight = "#AAFF80";
+
+
+      $('.srp').editable({
+          display: function(value, response) {
+              return false;
+          },
+          success: function(response, newValue) {
+              newValue = parseInt(newValue);
+              newvalue = newValue.toLocaleString() + " ISK";
+              $(this).html(newvalue.bold());
+          },
+          validate: function(value) {
+              if (value === null || value === '') {
+                  return 'Empty values not allowed';
+              }
+          }
+      });
+      $('.srp').on('hidden', function(e, reason){
+              if(reason === 'save' || reason === 'nochange') {
+              var $next = $(this).closest('tr').next().find('.editable');
+              setTimeout(function() {
+                  $next.editable('show');
+              }, 400); 
+          }
+     });
+  });
+  $(document).ready(function(){
+    $("[rel=tooltip]").tooltip({ placement: 'top'});
+});
+{% endblock extra_script %}

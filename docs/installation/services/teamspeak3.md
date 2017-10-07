@@ -1,6 +1,6 @@
 # Teamspeak 3
 
-Add `services.modules.teamspeak3` to your `INSTALLED_APPS` list and run migrations before continuing with this guide to ensure the service is installed.
+Add `allianceauth.services.modules.teamspeak3` to your `INSTALLED_APPS` list and run migrations before continuing with this guide to ensure the service is installed.
 
 ## Overview
 Teamspeak3 is the most popular VOIP program for gamers.
@@ -84,7 +84,7 @@ To enable advanced permissions, on your client go to the `Tools` menu, `Applicat
 ### TS group models not populating on admin site
 The method which populates these runs every 30 minutes. To populate manually, start a celery shell:
 
-    python manage.py celery shell
+    celery -A alliance_auth shell
 
 And execute the update:
 

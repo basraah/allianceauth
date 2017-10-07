@@ -1,0 +1,29 @@
+.gray-icon-color .fa {
+    color: #505050;
+}
+
+.notification-bell-color {
+    color: #A88F1E;
+}
+
+.navbar-brand {
+    height: 58px;
+    padding: 19px 19px;
+}
+
+.auth-navbar-top {
+    margin-bottom: 0;
+}
+
+.auth-side-navbar-collapse {
+    padding-left: 0;
+}
+
+#wrapper {
+    width: 100%;
+    padding: 0;
+}
+
+#site-body-wrapper {
+    margin-right:0;
+}

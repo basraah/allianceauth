@@ -1,0 +1,53 @@
+{% load static %}
+{% load i18n %}
+{% load navactive %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>{% block title %}{% block page_title %}{% endblock page_title %} - Alliance Auth{% endblock title %}</title>
+
+    {% include 'bundles/bootstrap-css.html' %}
+    {% include 'bundles/fontawesome.html' %}
+
+    <link href="{% static 'css/auth-base.css' %}" type="text/css" rel="stylesheet">
+    {% block extra_css %}{% endblock extra_css %}
+</head>
+<body>
+{% if user.is_authenticated %}
+    <div id="wrapper" class="container">
+        <!-- Navigation -->
+        {% include 'allianceauth/top-menu.html' %}
+        <div class="row" id="site-body-wrapper">
+            {% include 'allianceauth/side-menu.html' %}
+            <div class="col-sm-10">
+                {% if messages %}
+                    <br>
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.level_tag }}">{{ message }}</div>
+                        {% if not forloop.last %}
+                            <br>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                {% block content %}
+                {% endblock content %}
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+{% endif %}
+{% include 'bundles/bootstrap-js.html' %}
+{% block extra_javascript %}
+{% endblock extra_javascript %}
+<script>
+    {% block extra_script %}
+    {% endblock extra_script %}
+</script>
+</body>
+</html>
