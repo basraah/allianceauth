@@ -2,7 +2,7 @@ import logging
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from services.hooks import NameFormatter
+from allianceauth.services.hooks import NameFormatter
 
 from allianceauth.celeryapp import app
 from .manager import MumbleManager

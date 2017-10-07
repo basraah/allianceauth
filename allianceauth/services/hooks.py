@@ -1,5 +1,6 @@
 from django.conf.urls import include, url
 from django.template.loader import render_to_string
+from django.conf import settings
 
 from allianceauth.hooks import get_hooks
 
