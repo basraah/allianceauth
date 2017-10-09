@@ -97,6 +97,12 @@ class BaseSetPasswordServiceAccountView(ServicesCRUDMixin, BaseServiceView, Upda
     template_name = 'services/service_password.html'
     form_class = ServicePasswordModelForm  # You should overload this with a subclass
 
+    def post(self, request, *args, **kwargs):
+        result = super(BaseSetPasswordServiceAccountView, self).post(request, *args, **kwargs)
+        if self.get_form().is_valid():
+            messages.success(request, "Successfully set your {} password".format(self.service_name))
+        return result
+
 
 class BaseResetPasswordServiceAccountView(ServicesCRUDMixin, BaseServiceView, ServiceCredentialsViewMixin):
     """
