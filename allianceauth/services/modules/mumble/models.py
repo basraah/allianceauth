@@ -63,6 +63,7 @@ class MumbleUser(AbstractServiceModel):
         return self.username
 
     def update_password(self, password=None):
+        init_password = password
         logger.debug("Updating mumble user %s password.".format(self.user))
         if not password:
             password = MumbleManager.generate_random_pass()
@@ -72,7 +73,8 @@ class MumbleUser(AbstractServiceModel):
         self.pwhash = pwhash
         self.hashfn = MumbleManager.HASH_FN
         self.save()
-        self.credentials.update({'username': self.username, 'password': password})
+        if init_password is None:
+            self.credentials.update({'username': self.username, 'password': password})
 
     def reset_password(self):
         self.update_password()
