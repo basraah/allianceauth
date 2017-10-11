@@ -4,7 +4,7 @@ import semantic_version as semver
 from django import template
 from django.conf import settings
 from django.core.cache import cache
-from allianceauth.celeryapp import app
+from celery.app import app_or_default
 from allianceauth import __version__
 
 register = template.Library()
@@ -23,7 +23,6 @@ def get_github_tags():
 
 
 def get_github_notification_issues():
-    # TODO remove 'bug' tag, its just for testing
     # notification
     request = requests.get(
         'https://api.github.com/repos/allianceauth/allianceauth/issues?labels=announcement&state=all')
@@ -51,6 +50,7 @@ def status_overview(context):
 
 def get_celery_queue_length():
     try:
+        app = app_or_default(None)
         with app.connection_or_acquire() as conn:
             return conn.default_channel.queue_declare(
                 queue=getattr(settings, 'CELERY_DEFAULT_QUEUE', 'celery'), passive=True).message_count
