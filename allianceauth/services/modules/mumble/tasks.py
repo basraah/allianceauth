@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from allianceauth.services.hooks import NameFormatter
 
-from allianceauth.celeryapp import app
+from allianceauth.celery import app
 from .manager import MumbleManager
 from .models import MumbleUser
 
