@@ -26,7 +26,7 @@ def get_github_notification_issues():
     # TODO remove 'bug' tag, its just for testing
     # notification
     request = requests.get(
-        'https://api.github.com/repos/allianceauth/allianceauth/issues?labels=bug&state=all')
+        'https://api.github.com/repos/allianceauth/allianceauth/issues?labels=announcement&state=all')
     request.raise_for_status()
     return request.json()
 
