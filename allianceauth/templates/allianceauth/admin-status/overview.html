@@ -42,7 +42,7 @@
                                 <a href="{{ latest_major_url }}" style="color:#000"><i class="fa fa-github" aria-hidden="true"></i>
                                     {{ latest_major_version }}
                                 </a>
-                                {% if not latest_major %}{% trans "Update available" %}{% endif %}
+                                {% if not latest_major %}<br>{% trans "Update available" %}{% endif %}
                             </p>
                         </li>
                         <li class="list-group-item list-group-item-{% if latest_minor %}success{% else %}warning{% endif %}">
@@ -51,7 +51,7 @@
                                 <a href="{{ latest_minor_url }}" style="color:#000"><i class="fa fa-github" aria-hidden="true"></i>
                                     {{ latest_minor_version }}
                                 </a>
-                                {% if not latest_minor %}{% trans "Update available" %}{% endif %}
+                                {% if not latest_minor %}<br>{% trans "Update available" %}{% endif %}
                             </p>
                         </li>
                         <li class="list-group-item list-group-item-{% if latest_patch %}success{% else %}danger{% endif %}">
@@ -60,7 +60,7 @@
                                 <a href="{{ latest_patch_url }}" style="color:#000"><i class="fa fa-github" aria-hidden="true"></i>
                                     {{ latest_patch_version }}
                                 </a>
-                                {% if not latest_patch %}{% trans "Update available" %}{% endif %}
+                                {% if not latest_patch %}<br>{% trans "Update available" %}{% endif %}
                             </p>
                         </li>
                     </ul>
