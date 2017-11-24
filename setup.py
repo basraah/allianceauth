@@ -10,6 +10,7 @@ install_requires = [
     'bcrypt',
     'python-slugify>=1.2',
     'requests-oauthlib',
+    'semantic_version',
 
     'redis',
     'celery>=4.0.2',
@@ -51,4 +52,8 @@ setup(
     url='https://github.com/allianceauth/allianceauth',
     zip_safe=False,
     include_package_data=True,
+    entry_points="""
+            [console_scripts]
+            allianceauth=allianceauth.bin.allianceauth:main
+    """,
 )

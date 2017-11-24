@@ -6,8 +6,8 @@ from allianceauth.notifications import notify
 
 from allianceauth import hooks
 from allianceauth.services.hooks import ServicesHook
-from .manager import MumbleManager
 from .tasks import MumbleTasks
+from .models import MumbleUser
 from .urls import urlpatterns
 
 logger = logging.getLogger(__name__)
@@ -21,14 +21,18 @@ class MumbleService(ServicesHook):
         self.service_url = settings.MUMBLE_URL
         self.access_perm = 'mumble.access_mumble'
         self.service_ctrl_template = 'services/mumble/mumble_service_ctrl.html'
+        self.name_format = '[{corp_ticker}]{character_name}'
 
     def delete_user(self, user, notify_user=False):
         logging.debug("Deleting user %s %s account" % (user, self.name))
-        if MumbleManager.delete_user(user):
-            if notify_user:
-                notify(user, 'Mumble Account Disabled', level='danger')
-            return True
-        return False
+        try:
+            if user.mumble.delete():
+                if notify_user:
+                    notify(user, 'Mumble Account Disabled', level='danger')
+                return True
+            return False
+        except MumbleUser.DoesNotExist:
+            logging.debug("User does not have a mumble account")
 
     def update_groups(self, user):
         logger.debug("Updating %s groups for %s" % (self.name, user))

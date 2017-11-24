@@ -3,8 +3,7 @@ import logging
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 
-from allianceauth.celeryapp import app
-from .manager import MumbleManager
+from allianceauth.celery import app
 from .models import MumbleUser
 
 logger = logging.getLogger(__name__)
@@ -32,21 +31,19 @@ class MumbleTasks:
         user = User.objects.get(pk=pk)
         logger.debug("Updating mumble groups for user %s" % user)
         if MumbleTasks.has_account(user):
-            groups = []
-            for group in user.groups.all():
-                groups.append(str(group.name))
-            if len(groups) == 0:
-                groups.append('empty')
-            logger.debug("Updating user %s mumble groups to %s" % (user, groups))
             try:
-                if not MumbleManager.update_groups(user, groups):
+                if not user.mumble.update_groups():
                     raise Exception("Group sync failed")
+                logger.debug("Updated user %s mumble groups." % user)
+                return True
+            except MumbleUser.DoesNotExist:
+                logger.info("Mumble group sync failed for {}, user does not have a mumble account".format(user))
             except:
                 logger.exception("Mumble group sync failed for %s, retrying in 10 mins" % user)
                 raise self.retry(countdown=60 * 10)
-            logger.debug("Updated user %s mumble groups." % user)
         else:
             logger.debug("User %s does not have a mumble account, skipping" % user)
+        return False
 
     @staticmethod
     @app.task(name="mumble.update_all_groups")

@@ -3,8 +3,9 @@ import logging
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 
-from allianceauth.celeryapp import app
+from allianceauth.celery import app
 from allianceauth.notifications import notify
+from allianceauth.services.hooks import NameFormatter
 from .manager import SeatManager
 from .models import SeatUser
 
@@ -24,7 +25,7 @@ class SeatTasks:
 
     @classmethod
     def delete_user(cls, user, notify_user=False):
-        if cls.has_account(user) and SeatManager.delete_user(user.seat.username):
+        if cls.has_account(user) and SeatManager.disable_user(user.seat.username):
             user.seat.delete()
             logger.info("Successfully deactivated SeAT for user %s" % user)
             if notify_user:
@@ -64,3 +65,8 @@ class SeatTasks:
     @staticmethod
     def deactivate():
         SeatUser.objects.all().delete()
+
+    @staticmethod
+    def get_username(user):
+        from .auth_hooks import SeatService
+        return NameFormatter(SeatService(), user).format_name()
