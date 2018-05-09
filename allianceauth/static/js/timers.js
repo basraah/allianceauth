@@ -16,3 +16,8 @@ function getDurationString(duration) {
     }
     return out + duration.hours() + "h " + duration.minutes() + "m " + duration.seconds() + "s";
 }
+
+
+function getCurrentEveTimeString() {
+    return moment().utc().format('dddd LL HH:mm:ss')
+}
