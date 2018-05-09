@@ -8,6 +8,9 @@ function getDurationString(duration) {
     if (duration.years()) {
         out += duration.years() + 'y ';
     }
+    if (duration.months()) {
+        out += duration.months() + 'm ';
+    }
     if (duration.days()) {
         out += duration.days() + 'd ';
     }
